@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>26주 커스텀 성장 프로그램 v5.1</title>
+    <title>26주 커스텀 성장 프로그램 v5.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -37,8 +37,8 @@
         <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30">
             <div class="px-4 py-3 flex justify-between items-center">
                 <div>
-                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">Growth Protocol <span class="text-blue-600">v5.1</span></h1>
-                    <p class="text-[10px] text-slate-500 font-medium">사이클 자동 연결</p>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">Growth Protocol <span class="text-blue-600">v5.5</span></h1>
+                    <p class="text-[10px] text-slate-500 font-medium">3단 목표 레이아웃</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="openGuide()" class="text-slate-400 border border-slate-200 p-1.5 rounded-full hover:bg-slate-50 hover:text-blue-500 transition">
@@ -48,7 +48,7 @@
                 </div>
             </div>
             
-            <!-- Week Scroller (Updated onclick handlers) -->
+            <!-- Week Scroller -->
             <div class="border-b border-slate-100 flex items-center bg-white">
                 <button onclick="changeWeek(-1)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10" aria-label="이전 주">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -126,7 +126,7 @@
         </div>
     </div>
 
-    <!-- Guide Modal (Restored Original Text) -->
+    <!-- Guide Modal -->
     <div id="guide-modal" class="fixed inset-0 z-[70] flex items-center justify-center invisible opacity-0 transition-all duration-300 p-4">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeGuide()"></div>
         <div class="bg-white w-full max-w-md rounded-2xl p-6 relative z-10 shadow-2xl transform scale-95 transition-transform duration-300" id="guide-panel">
@@ -227,9 +227,11 @@
     </div>
 
 <script>
-    // (Templates unchanged from v4.7 - reduced weight, correct sets/reps)
+    // ==========================================
+    // 1. DATA (SETS & REPS FIXED)
+    // ==========================================
     const TEMPLATES = {
-        // PULL A
+        // --- PULL A ---
         "pull_a_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 노틸러스 풀오버", cue: { primary: "광배근 스트레칭", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
         "pull_a_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운 (가볍게)", cue: { primary: "견갑 하강", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
         "pull_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "수평 당기기 (T바)", example: "예: 해머스트랭스 래터럴 로우 (T바)", cue: { primary: "승모/능형근/후면삼각근", tip: "등 상부 전체(후면 삼각근, 능형근, 중부 승모근)의 분리도와 선명도를 높이는 것이 목표입니다. 의자를 낮춰 거의 서는 자세를 만들고, 팔꿈치를 90도로 높게 벌린 T자 형태를 유지하며 견갑골(날개뼈)을 강하게 쥐어짜주세요." }, progression: { base: 40, unit: "한쪽" } },
@@ -237,7 +239,8 @@
         "pull_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "로우 로우", example: "예: 해머스트랭스 로우로우", cue: { primary: "등 중앙/하부", tip: "등 상부 전체, 특히 승모근과 능형근의 종합적인 발달을 위한 운동입니다. 이 머신은 당기는 동작 후반부에 자연스러운 상승 궤적을 그립니다. 이 궤적을 따라 견갑골을 강하게 모으면서 자연스럽게 으쓱해준다는 느낌으로 끝까지 당겨주면, 등 중앙부는 물론 상부 승모근까지 완벽하게 자극할 수 있습니다." }, progression: { base: 40, unit: "한쪽" } },
         "pull_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "후면 어깨", example: "예: 리어 델트 머신", cue: { primary: "후면 삼각근", tip: "가슴을 패드에 붙이고, 팔을 편 상태를 유지하며 어깨 뒤쪽 근육의 힘으로만 핸들을 벌려줍니다." }, progression: { base: 15, unit: "kg" } },
         "pull_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "삼두 푸쉬다운", example: "예: 케이블 푸쉬 다운", cue: { primary: "삼두근", tip: "팔꿈치를 옆구리에 고정한 채, 삼두근 바깥쪽의 힘으로 바를 아래로 눌러줍니다. 상체 반동을 최소화하세요." }, progression: { base: 20, unit: "kg" } },
-        // PULL B
+
+        // --- PULL B ---
         "pull_b_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 노틸러스 풀오버", cue: { primary: "광배근", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
         "pull_b_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운 (가볍게)", cue: { primary: "견갑 하강", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
         "pull_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "D.Y. 로우 (언더)", example: "예: 해머스트랭스 D.Y. 로우", cue: { primary: "광배 하부", tip: "언더그립으로 광배근 하부를 완벽하게 고립하여 타겟합니다. 안장을 낮춰 명치에 패드가 오게 하고, 팔꿈치를 옆구리에 붙여 배꼽 쪽으로 당기는 느낌에 집중하세요." }, progression: { base: 40, unit: "한쪽" } },
@@ -245,7 +248,8 @@
         "pull_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "프론트 풀다운", example: "예: 해머스트랭스 프론트 풀다운", cue: { primary: "광배 전체", tip: "언더핸드 그립으로 핸들을 잡고 광배근 전체를 타겟합니다. 머신의 자연스러운 호(arc) 궤적을 따라 팔꿈치를 아래 및 뒤쪽으로 당겨, 등 중앙부까지 완전히 수축하는 느낌에 집중하세요." }, progression: { base: 40, unit: "한쪽" } },
         "pull_b_04": { type: "SUB", sets: "3-4세트", reps: "10-12회", defaultName: "원 암 로우", example: "예: 해머스트랭스 원핸드 로우", cue: { primary: "등 전체 볼륨", tip: "등 전체의 '덩어리감'과 볼륨을 채워줍니다. 팔꿈치로 등 중앙을 깊게 찍는다는 느낌으로 당깁니다." }, progression: { base: 18, unit: "한쪽" } },
         "pull_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "트라이셉스 익스텐션", example: "예: 라잉 트라이셉스 익스텐션", cue: { primary: "삼두 장두", tip: "삼두근의 가장 큰 부위(장두)를 타겟합니다. 팔꿈치를 고정한 채 이마나 정수리 쪽으로 바를 내립니다. EZ바 사용을 권장합니다." }, progression: { base: 15, unit: "kg" } },
-        // PULL C
+
+        // --- PULL C ---
         "pull_c_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 덤벨 풀오버", cue: { primary: "광배근", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
         "pull_c_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운", cue: { primary: "활성화", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
         "pull_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "랫풀다운 (패러럴)", example: "예: 랫풀다운 (맥그립 중간)", cue: { primary: "광배 전체/볼륨", tip: "광배근 전체의 볼륨과 매스를 키우는 올라운더 그립. 가슴을 열고 팔꿈치를 아래쪽 옆구리로 당긴다는 느낌으로 수행합니다." }, progression: { base: 65, unit: "총" } },
@@ -253,7 +257,8 @@
         "pull_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "원 암 풀다운", example: "예: 해머 프론트 풀다운 (파나타 스타일)", cue: { primary: "광배 바깥쪽/이완", tip: "원 암 방식으로 견갑골을 최대로 움직여, 일반 풀다운으로는 불가능한 '최대 이완' 지점을 공략해 등 너비감을 만드는 운동입니다.<br>스트랩형 원핸드 그립 연결 후, 운동하는 쪽 어깨를 앞으로 최대한 밀어내 광배근 바깥쪽의 최대 이완 지점을 찾고, 그 지점에서부터 팔꿈치를 골반 쪽으로 당겨 등 하부까지 수축합니다." }, progression: { base: 30, unit: "한쪽" } },
         "pull_c_04": { type: "SUB", sets: "3-4세트", reps: "15-20회", defaultName: "백 익스텐션", example: "예: 백 익스텐션", cue: { primary: "기립근/하부", tip: "허리 라인의 선명함과 깊이감을 만듭니다. 엉덩이와 등의 힘으로 상체를 들어올리고, 허리가 과하게 꺾이지 않도록 주의합니다." }, progression: { base: 0, unit: "맨몸" } },
         "pull_c_05": { type: "FINISH", sets: "2-3세트", reps: "8-10회", defaultName: "오버헤드 익스텐션", example: "예: 뉴텍 오버헤드 익스텐션", cue: { primary: "삼두 장두", tip: "시작 저항이 매우 강한 머신입니다. 처음에는 원판 없이 시작하여 자극에 적응하세요. 팔꿈치를 고정하고, 천천히 이완하며 삼두근 장두가 최대로 늘어나는 것을 느끼는 것이 핵심입니다." }, progression: { base: 0, unit: "kg" } },
-        // PUSH A
+
+        // --- PUSH A ---
         "push_a_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우 (가볍게)", cue: { primary: "후면 활성화", tip: "견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
         "push_a_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
         "push_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 프레스 (스미스)", example: "예: 로우 인클라인 스미스 프레스", cue: { primary: "윗가슴 (쇄골지)", tip: "벤치 각도를 낮게(약 15-20도) 설정하여 윗가슴 상부를 타겟합니다. 등을 패드에 단단히 고정하되, 견갑은 자연스럽게 움직이도록 허용하여 윗가슴의 최대 이완과 수축에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
@@ -261,7 +266,8 @@
         "push_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스", example: "예: 해머스트랭스 숄더 프레스", cue: { primary: "전면/측면 어깨", tip: "어깨의 전면과 측면을 타겟합니다. 등을 패드에 기대어 몸을 안정시키고, 자연스러운 어깨와 견갑의 리듬을 이용해 어깨 근육을 끝까지 수축하고 이완시키는 것에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
         "push_a_04": { type: "SUB", sets: "3-4세트", reps: "실패지점까지", defaultName: "딥스", example: "예: 딥스 머신", cue: { primary: "아랫가슴/삼두", tip: "아랫가슴과 삼두근에 볼륨을 더합니다. 상체를 숙일수록 아랫가슴에 자극이 집중됩니다. 이완 시 견갑이 자연스럽게 상승하며 가슴이 최대로 늘어나는 것을 느끼세요." }, progression: { base: 0, unit: "맨몸" } },
         "push_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "이두 컬", example: "예: 암 컬 머신 (투핸드)", cue: { primary: "이두근", tip: "팔을 패드에 완전히 고정하고, 반동 없이 이두근의 힘으로만 핸들을 들어올려 강하게 수축합니다." }, progression: { base: 15, unit: "kg" } },
-        // PUSH B
+
+        // --- PUSH B ---
         "push_b_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우", cue: { primary: "후면 활성화", tip: "견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
         "push_b_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
         "push_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스", example: "예: 해머 시티드 체스트 프레스", cue: { primary: "가슴 중앙", tip: "가슴 중앙부의 볼륨감을 키우는 것이 목표입니다. 등을 패드에 완전히 고정하여 안정적인 기반을 만들되, 견갑의 자연스러운 움직임을 허용하여 가슴 근육의 최대 수축과 이완에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
@@ -269,7 +275,8 @@
         "push_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (스미스)", example: "예: 스미스 숄더 프레스", cue: { primary: "전면 어깨", tip: "바가 턱 끝이나 쇄골까지 오도록 깊게 내립니다. 등을 벤치에 기대어 안정성을 확보하고, 견갑의 자연스러운 상방회전을 이용해 어깨 근육을 끝까지 쥐어짜는 느낌에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
         "push_b_04": { type: "SUB", sets: "3-4세트", reps: "15-20회", defaultName: "케이블 크로스오버", example: "예: 케이블 크로스오버", cue: { primary: "가슴 안쪽", tip: "가슴 중앙부와 안쪽 라인을 만드는 것이 목표입니다.<br>1. 케이블 풀리를 가슴 중앙 높이에 맞추고 D-핸들을 잡습니다.<br>2. 몸을 앞으로 살짝 숙여 안정적인 자세를 잡습니다.<br>3. 팔꿈치를 살짝 구부린 상태로, 큰 원을 그리듯 가슴 중앙으로 모아주며 강하게 수축합니다." }, progression: { base: 10, unit: "kg" } },
         "push_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "원 암 컬", example: "예: 암 컬 머신 (원핸드)", cue: { primary: "이두근", tip: "한 팔씩 수행하여 좌우 불균형을 교정하고 최고의 마인드-머슬 커넥션을 이끌어냅니다." }, progression: { base: 8, unit: "한쪽" } },
-        // PUSH C
+
+        // --- PUSH C ---
         "push_c_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우", cue: { primary: "후면 활성화", tip: "견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
         "push_c_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
         "push_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "덤벨 인클라인 (뉴트럴)", example: "예: 뉴트럴그립 덤벨 인클라인", cue: { primary: "윗가슴", tip: "벤치 각도를 30도로 설정합니다. 어깨 관절의 부담을 줄이면서 윗가슴 상부(쇄골지)를 집중적으로 공략하는 것이 핵심입니다. 등을 벤치에 단단히 고정하고, 팔꿈치를 과도하게 벌리지 말고 몸통에 가까운 궤적으로 움직이세요. 덤벨을 내릴 때 윗가슴이 최대로 늘어나는 것을 느끼고, 들어 올릴 때는 윗가슴을 강하게 쥐어짠다는 느낌에 집중하세요." }, progression: { base: 26, unit: "한쪽" } },
@@ -325,7 +332,7 @@
     // ==========================================
     // 2. STATE MANAGEMENT & WAKE LOCK & AUDIO
     // ==========================================
-    const STORE_KEY = "v5_1_workout_data"; // Updated version key
+    const STORE_KEY = "v5_5_workout_data"; // Updated version key
     let state = {
         week: 1, cycle: 1, day: 'pull',
         customs: {}, // { tplId: { name, note, unit: 'kg'|'lbs' } }
@@ -544,7 +551,25 @@
             if (mult > 1.0 && nextW <= best.w) nextW = best.w + (isLbs ? 5 : 2.5);
 
             const backoff = isLbs ? Math.round(nextW * 0.8 / 5) * 5 : round2_5(nextW * 0.8);
-            return `🔥 강화: Top 1세트(${nextW}${unitText}) / Back-off 2세트(${backoff}${unitText})`;
+            
+            // Feeder calculations
+            let f1 = nextW * 0.5;
+            let f2 = nextW * 0.75;
+            
+            if (isLbs) {
+                f1 = Math.round(f1 / 5) * 5;
+                f2 = Math.round(f2 / 5) * 5;
+            } else {
+                f1 = round2_5(f1);
+                f2 = round2_5(f2);
+            }
+
+            // Modified Layout: Multi-line with indentation, Red color for Top/Back-off
+            return `
+            <span class="block mb-1 text-blue-600">🔥 강화: 피더(${f1}${unitText}x5, ${f2}${unitText}x3)</span>
+            <span class="block pl-4 text-red-600 font-bold mb-0.5">↳ Top 1세트(${nextW}${unitText} x 최대)</span>
+            <span class="block pl-4 text-red-600 font-bold">↳ Back-off 1세트(${backoff}${unitText} x 10)</span>
+            `;
         }
 
         // Sub/Finish Logic
@@ -605,6 +630,14 @@
         el.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
     }
 
+    function changeCycle(delta) {
+        const newCycle = state.cycle + delta;
+        if (newCycle < 1) return;
+        state.cycle = newCycle;
+        saveData();
+        render();
+    }
+
     function changeWeek(delta) {
         let nextWeek = state.week + delta;
         if (nextWeek > 13) {
@@ -620,14 +653,6 @@
         } else {
             state.week = nextWeek;
         }
-        saveData();
-        render();
-    }
-
-    function changeCycle(delta) {
-        const newCycle = state.cycle + delta;
-        if (newCycle < 1) return;
-        state.cycle = newCycle;
         saveData();
         render();
     }
@@ -712,9 +737,11 @@
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed mb-2">${tpl.cue.tip}</p>
                     ${custom.note ? `<p class="text-xs text-amber-600 font-medium border-t border-slate-200 pt-1">📝 ${custom.note}</p>` : ''}
-                    <div class="mt-2 pt-2 border-t border-slate-200 font-bold text-blue-600 text-sm flex items-center gap-1">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                        ${goalText}
+                    
+                    <!-- Modified Goal Display (flex-col -> items-start for multi-line) -->
+                    <div class="mt-2 pt-2 border-t border-slate-200 font-bold text-blue-600 text-sm flex items-start gap-1">
+                        <svg class="mt-0.5 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        <div>${goalText}</div>
                     </div>
                 </div>
 
@@ -751,6 +778,9 @@
         container.appendChild(div);
     }
 
+    // ==========================================
+    // 5. INTERACTION LOGIC
+    // ==========================================
     function setDay(d) { state.day = d; saveData(); render(); }
     function addSet(tplId) {
         const c = document.getElementById(`sets-${tplId}`);
@@ -783,7 +813,7 @@
         saveData();
     }
 
-    // Modal & History (same as before)
+    // --- Modal Logic ---
     let editingId = null;
     const modalEl = document.getElementById('custom-modal');
     const modalPanel = document.getElementById('modal-panel');
@@ -872,12 +902,7 @@
     
     function checkTimer(tplId, input) {
         const row = input.parentElement.parentElement; // input inside div wrapper inside row
-        // Need to traverse correctly
-        // Structure: row -> [span, div(w-16) -> input, div(flex-grow) -> input, button]
-        // If input is reps, its parent is div(flex-grow), parent's previous sibling is div(w-16)
-        
-        // Simpler way: find input-w in same row
-        const container = input.closest('.flex'); // The row div
+        const container = input.closest('.flex'); 
         const weightInput = container.querySelector('.input-w');
         
         if(input.value && weightInput.value) {
