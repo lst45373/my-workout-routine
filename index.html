@@ -499,9 +499,41 @@
         }
 
         // We take the weight of the first set as the "attempted weight"
-        let lastAttemptWeight = Number(lastRec.sets[0].weight);
+        let lastAttemptWeight = Number(lastRec.sets[0].w);
         if (isNaN(lastAttemptWeight)) lastAttemptWeight = currentWeight; // Fallback
+
+
+        // =============================
+//  🔥 감량 로직 (보조운동 전용)
+// =============================
+{
+    const minReps = parseInt((targetReps.match(/(\d+)/) || [])[1] || 0);
+    const requiredLowLevelSets = 3; // 최소 3세트 기준
+    const baseWeight = tpl.progression.base;
+
+    // 현재 기록 세트에서 성공판정용 “최소 기준” 충족 세트 수 계산
+    let okSets = 0;
+
+    lastRec.sets.forEach(s => {
+        const w = Number(s.w) || 0;
+        const r = Number(s.r) || 0;
         
+        // 미니멈 무게 & 미니멈 횟수 조건
+        if (w >= baseWeight && r >= minReps) {
+            okSets++;
+        }
+    });
+
+    // 🔥 감량 조건: 3세트 미만이면 감량
+    if (okSets < requiredLowLevelSets) {
+        let dec = increment;
+        if (custom.unit === 'lbs') dec = Math.round(dec * 2.2);
+
+        const reducedWeight = Math.max(baseWeight, lastAttemptWeight - dec);
+
+        return `🔥 감량 권장: ${reducedWeight}${unitText} x ${targetReps} (${targetSets})`;
+    }
+}
         // Check Success:
         // 1. Performed at least 'minSets'
         // 2. ALL sets met 'maxReps' (Strict Aegis for Hypertrophy)
@@ -1081,6 +1113,7 @@ function stopTimer() {
 </script>
 </body>
 </html>
+
 
 
 
