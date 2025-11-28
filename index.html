@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>26주 커스텀 성장 프로그램 v6.0</title>
+    <title>26주 커스텀 성장 프로그램 v6.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -37,8 +37,8 @@
         <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30">
             <div class="px-4 py-3 flex justify-between items-center">
                 <div>
-                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">Growth Protocol <span class="text-blue-600">v6.0</span></h1>
-                    <p class="text-[10px] text-slate-500 font-medium">26주 완성을 위한 플래너</p>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">Growth Protocol <span class="text-blue-600">v6.1</span></h1>
+                    <p class="text-[10px] text-slate-500 font-medium">유튜브 검색 기능 추가</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="openGuide()" class="text-slate-400 border border-slate-200 p-1.5 rounded-full hover:bg-slate-50 hover:text-blue-500 transition">
@@ -329,7 +329,7 @@
     // ==========================================
     // 2. STATE MANAGEMENT & WAKE LOCK & AUDIO
     // ==========================================
-    const STORE_KEY = "v5_9_workout_data"; // Updated version key
+    const STORE_KEY = "v6_1_workout_data"; // Updated version key
     let state = {
         week: 1, cycle: 1, day: 'pull',
         customs: {}, // { tplId: { name, note, unit: 'kg'|'lbs' } }
@@ -767,8 +767,11 @@
                         <button onclick="openHistory('${tplId}')" class="text-slate-300 hover:text-blue-500 p-2" title="과거 기록">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </button>
+                        <button onclick="openYoutubeSearch('${custom.name || tpl.defaultName}')" class="text-red-500 hover:text-red-600 p-2" title="유튜브 검색">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        </button>
                         <button onclick="openModal('${tplId}')" class="text-slate-300 hover:text-slate-500 p-2 -mr-2" title="설정">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -940,6 +943,11 @@
         setTimeout(() => guideEl.classList.add('invisible'), 300);
     }
 
+    // YouTube Search
+    function openYoutubeSearch(query) {
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
+    }
+
     // --- Timer Logic (Smart Countdown) ---
     let timerInt;
     
@@ -1021,4 +1029,3 @@
 </script>
 </body>
 </html>
-
