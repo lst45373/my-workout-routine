@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <!-- viewport-fit=cover 추가로 아이폰 노치 영역 대응 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>26주 커스텀 성장 프로그램 v4.8</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body { font-family: 'Pretendard', sans-serif; -webkit-font-smoothing: antialiased; }
+        .card-enter { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #timer-banner { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #timer-banner.show { transform: translateY(0); }
+        #timer-banner.hide { transform: translateY(100%); }
+        @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; background-color: #dcfce7; } }
+        .timer-finished { animation: flash 0.5s 4; }
+
+        /* --- iOS Safe Area & Input Fixes --- */
+        /* 아이폰 하단 바(Home Indicator) 침범 방지 */
+        body { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
+        
+        /* 아이폰 상단 노치 침범 방지 (헤더) */
+        header { padding-top: env(safe-area-inset-top); }
+
+        /* 타이머 배너가 아이폰 하단 바 위에 뜨도록 설정 */
+        #timer-banner { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+        
+        /* 아이폰에서 입력창 터치 시 자동 확대 방지 (16px 이상 필수) */
+        @media screen and (max-width: 640px) {
+            input, textarea, select { font-size: 16px !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 select-none">
+
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative bg-white sm:shadow-xl sm:my-4 sm:rounded-2xl overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30">
+            <div class="px-5 py-4 flex justify-between items-center">
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Growth Protocol <span class="text-blue-600">v4.8</span></h1>
+                    <p class="text-xs text-slate-500 font-medium">iOS 최적화 & 중량 조정</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openGuide()" class="text-slate-400 border border-slate-200 p-1.5 rounded-full hover:bg-slate-50 hover:text-blue-500 transition">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    </button>
+                    <button onclick="resetData()" class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 hover:text-red-500 transition">초기화</button>
+                </div>
+            </div>
+            
+            <!-- Week Scroller -->
+            <div class="border-b border-slate-100 flex items-center bg-white">
+                <button onclick="scrollWeeks(-1)" class="p-3 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="flex-grow overflow-x-auto flex gap-2 py-2 no-scrollbar scroll-smooth px-1" id="week-scroller"></div>
+                <button onclick="scrollWeeks(1)" class="p-3 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+
+            <!-- Day Selector -->
+            <div class="grid grid-cols-3 gap-1 p-2 bg-slate-50 mx-4 mt-3 mb-2 rounded-xl border border-slate-100">
+                <button onclick="setDay('pull')" id="btn-pull" class="day-btn py-2 text-sm font-bold rounded-lg transition-all">PULL</button>
+                <button onclick="setDay('push')" id="btn-push" class="day-btn py-2 text-sm font-bold rounded-lg transition-all">PUSH</button>
+                <button onclick="setDay('leg')" id="btn-leg" class="day-btn py-2 text-sm font-bold rounded-lg transition-all">LEG</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow p-4 space-y-5 overflow-y-auto no-scrollbar" id="main-content">
+            
+            <!-- Routine Info -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden transition-all duration-300">
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22 14.86 20.57 16.29 22 18.43 19.86 22 16.29z"/></svg>
+                </div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="flex items-center bg-white/10 rounded-lg backdrop-blur-sm border border-white/10">
+                            <button onclick="changeCycle(-1)" class="px-2 py-1 hover:bg-white/10 rounded-l-lg text-white/70 hover:text-white transition">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <span id="cycle-badge" class="px-1 text-[10px] font-bold text-white min-w-[80px] text-center">C1: 블록 주기</span>
+                            <button onclick="changeCycle(1)" class="px-2 py-1 hover:bg-white/10 rounded-r-lg text-white/70 hover:text-white transition">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </button>
+                        </div>
+                        <span id="phase-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/80 text-white backdrop-blur-sm shadow-sm">강화 주기</span>
+                    </div>
+                    <h2 id="routine-title" class="text-2xl font-bold mb-1">PULL A</h2>
+                    <p id="routine-subtitle" class="text-sm text-slate-300 font-medium">등 상부의 두께감과 분리도 타겟</p>
+                </div>
+            </div>
+
+            <!-- Exercises List -->
+            <div id="exercise-list" class="space-y-6 pb-20"></div>
+        </main>
+    </div>
+
+    <!-- Timer Floating Banner -->
+    <div id="timer-banner" class="fixed bottom-0 left-0 right-0 sm:max-w-md sm:mx-auto bg-slate-900 text-white p-4 z-50 rounded-t-2xl shadow-2xl hide">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5" id="timer-status-text">Resting</p>
+                <p id="timer-exercise-name" class="text-sm font-bold truncate w-40">Exercise Name</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="timer-display" class="text-4xl font-mono font-bold tabular-nums tracking-tighter">00:00</span>
+                <button onclick="stopTimer()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-bold transition">Skip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history-modal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center invisible opacity-0 transition-all duration-300">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeHistoryModal()"></div>
+        <div class="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6 relative z-10 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[80vh]" id="history-panel">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 class="text-lg font-bold text-slate-900">과거 기록 (History)</h3>
+                <button onclick="closeHistoryModal()" class="p-2 bg-slate-100 rounded-full hover:bg-slate-200 text-slate-500">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div id="history-content" class="flex-grow overflow-y-auto space-y-3 pr-1"></div>
+        </div>
+    </div>
+
+    <!-- Guide Modal -->
+    <div id="guide-modal" class="fixed inset-0 z-[70] flex items-center justify-center invisible opacity-0 transition-all duration-300 p-4">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeGuide()"></div>
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 relative z-10 shadow-2xl transform scale-95 transition-transform duration-300" id="guide-panel">
+            <h3 class="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="text-2xl">💡</span> 훈련 가이드
+            </h3>
+            
+            <div class="space-y-6 overflow-y-auto max-h-[65vh] pr-2 text-sm text-slate-700">
+                <!-- Strength Phase -->
+                <div>
+                    <h4 class="font-bold text-red-600 mb-2 text-base">🔥 강화 주기 (Strength Phase)</h4>
+                    <ul class="list-disc list-inside space-y-2 bg-red-50 p-3 rounded-lg text-slate-600">
+                        <li>
+                            <strong class="text-red-700">준비 세트 (Feeder Sets):</strong><br>
+                            <span class="text-xs pl-5 block mt-1">탑 세트 전 무게를 점차 올리며 <strong>1~3회</strong>씩 수행해 신경계를 예열합니다. 힘을 아끼세요.</span>
+                        </li>
+                        <li>
+                            <strong class="text-red-700">탑 세트 (Top Set):</strong><br>
+                            <span class="text-xs pl-5 block mt-1">목표 중량으로 <strong>실패 지점까지(AMRAP)</strong> 수행합니다. 이 기록이 다음 훈련 중량의 기준이 됩니다.</span>
+                        </li>
+                        <li>
+                            <strong class="text-red-700">백오프 세트 (Back-off):</strong><br>
+                            <span class="text-xs pl-5 block mt-1">탑 세트 후 중량을 약 20% 낮춰 추가 세트를 수행하여 볼륨을 채웁니다.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Accumulation Phase -->
+                <div>
+                    <h4 class="font-bold text-green-600 mb-2 text-base">🌿 축적 주기 (Accumulation Phase)</h4>
+                    <ul class="list-disc list-inside space-y-2 bg-green-50 p-3 rounded-lg text-slate-600">
+                        <li>
+                            <strong class="text-green-700">워킹 세트 (Working Sets):</strong><br>
+                            <span class="text-xs pl-5 block mt-1">이전 최고 기록(1RM)의 약 70% 무게로 <strong>정해진 횟수/세트</strong>를 수행하여 운동량을 쌓습니다. (2.5kg 단위 보정)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Customization Guide -->
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-2 text-base flex items-center gap-1">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        운동 커스터마이징
+                    </h4>
+                    <div class="bg-slate-100 p-3 rounded-lg text-slate-600 text-xs">
+                        <p>각 운동 카드 우측 상단의 <strong>설정 아이콘</strong>을 누르면,</p>
+                        <ul class="list-disc list-inside mt-1 space-y-1">
+                            <li>내 헬스장 기구 이름으로 변경</li>
+                            <li>단위 (kg/lbs) 변경</li>
+                            <li>나만의 팁 메모 작성</li>
+                        </ul>
+                        <p class="mt-1">이 가능합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="guide-checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <span class="text-xs text-slate-500 font-medium">다시는 보지 않기</span>
+                </label>
+                <button onclick="closeGuide()" class="px-5 py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customization Modal -->
+    <div id="custom-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center invisible opacity-0 transition-all duration-300">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
+        <div class="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6 relative z-10 transform translate-y-full transition-transform duration-300 shadow-2xl" id="modal-panel">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <span class="text-xs font-bold text-blue-600 uppercase tracking-wide">Customize</span>
+                    <h3 class="text-xl font-bold text-slate-900 mt-1">운동 매핑 설정</h3>
+                </div>
+                <button onclick="closeModal()" class="p-2 bg-slate-100 rounded-full hover:bg-slate-200 text-slate-500">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-5">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <p class="text-xs text-slate-500 font-bold mb-1">원본 템플릿 (목적)</p>
+                    <p id="modal-tpl-name" class="font-semibold text-slate-700">Template Name</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-900 mb-2">내가 사용할 기구 이름 <span class="text-red-500">*</span></label>
+                    <input type="text" id="custom-name-input" class="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium placeholder-slate-400 text-slate-800" placeholder="">
+                    <p class="text-[11px] text-slate-400 mt-1.5 ml-1">위 예시(흐린 글씨)를 참고하여, 실제로 사용하는 기구 이름을 입력하세요.</p>
+                </div>
+
+                <!-- Unit Selector -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-900 mb-2">단위 (Unit)</label>
+                    <div class="flex gap-2">
+                        <label class="flex-1 relative cursor-pointer">
+                            <input type="radio" name="custom-unit" value="kg" class="peer sr-only" checked>
+                            <div class="p-3 text-center rounded-xl border border-slate-200 bg-white text-slate-600 font-bold peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">KG</div>
+                        </label>
+                        <label class="flex-1 relative cursor-pointer">
+                            <input type="radio" name="custom-unit" value="lbs" class="peer sr-only">
+                            <div class="p-3 text-center rounded-xl border border-slate-200 bg-white text-slate-600 font-bold peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 transition-all">LBS</div>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-900 mb-2">메모 (세팅값 등)</label>
+                    <textarea id="custom-note-input" rows="2" class="w-full p-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm placeholder-slate-400" placeholder="예: 의자 높이 3칸, 언더그립"></textarea>
+                </div>
+
+                <button onclick="saveCustomization()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-transform active:scale-95">설정 저장하기</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // ==========================================
+    // 1. DATA (WEIGHTS OPTIMIZED FOR BEGINNERS)
+    // ==========================================
+    const TEMPLATES = {
+        // --- PULL A ---
+        "pull_a_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 노틸러스 풀오버", cue: { primary: "광배근 스트레칭", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
+        "pull_a_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운 (가볍게)", cue: { primary: "견갑 하강", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
+        "pull_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "수평 당기기 (T바)", example: "예: 해머스트랭스 래터럴 로우 (T바)", cue: { primary: "승모/능형근/후면삼각근", tip: "등 상부 전체(후면 삼각근, 능형근, 중부 승모근)의 분리도와 선명도를 높이는 것이 목표입니다. 의자를 낮춰 거의 서는 자세를 만들고, 팔꿈치를 90도로 높게 벌린 T자 형태를 유지하며 견갑골(날개뼈)을 강하게 쥐어짜주세요." }, progression: { base: 40, unit: "한쪽" } },
+        "pull_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "하이 로우", example: "예: 해머스트랭스 하이로우", cue: { primary: "광배 상부/대원근", tip: "등 상부 전체, 특히 승모근과 능형근의 볼륨감을 키웁니다. 윗가슴을 패드에 고정하고, 팔꿈치를 대각선 아래 & 뒤쪽으로 당기며 등 상부를 최대한 수축하세요." }, progression: { base: 35, unit: "한쪽" } },
+        "pull_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "로우 로우", example: "예: 해머스트랭스 로우로우", cue: { primary: "등 중앙/하부", tip: "등 상부 전체, 특히 승모근과 능형근의 종합적인 발달을 위한 운동입니다. 이 머신은 당기는 동작 후반부에 자연스러운 상승 궤적을 그립니다. 이 궤적을 따라 견갑골을 강하게 모으면서 자연스럽게 으쓱해준다는 느낌으로 끝까지 당겨주면, 등 중앙부는 물론 상부 승모근까지 완벽하게 자극할 수 있습니다." }, progression: { base: 40, unit: "한쪽" } },
+        "pull_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "후면 어깨", example: "예: 리어 델트 머신", cue: { primary: "후면 삼각근", tip: "가슴을 패드에 붙이고, 팔을 편 상태를 유지하며 어깨 뒤쪽 근육의 힘으로만 핸들을 벌려줍니다." }, progression: { base: 15, unit: "kg" } }, // Reduced
+        "pull_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "삼두 푸쉬다운", example: "예: 케이블 푸쉬 다운", cue: { primary: "삼두근", tip: "팔꿈치를 옆구리에 고정한 채, 삼두근 바깥쪽의 힘으로 바를 아래로 눌러줍니다. 상체 반동을 최소화하세요." }, progression: { base: 20, unit: "kg" } }, // Reduced
+
+        // --- PULL B ---
+        "pull_b_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 노틸러스 풀오버", cue: { primary: "광배근", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
+        "pull_b_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운 (가볍게)", cue: { primary: "견갑 하강", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
+        "pull_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "D.Y. 로우 (언더)", example: "예: 해머스트랭스 D.Y. 로우", cue: { primary: "광배 하부", tip: "언더그립으로 광배근 하부를 완벽하게 고립하여 타겟합니다. 안장을 낮춰 명치에 패드가 오게 하고, 팔꿈치를 옆구리에 붙여 배꼽 쪽으로 당기는 느낌에 집중하세요." }, progression: { base: 40, unit: "한쪽" } },
+        "pull_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "랫풀다운 (언더)", example: "예: 랫풀다운 (맥그립 언더)", cue: { primary: "광배 하부 (수직)", tip: "D.Y. 로우와 함께 광배근 하부를 다른 각도(수직)에서 공략합니다. 가슴을 열고 당겨주며, 최대 수축 지점에서 등을 쥐어짜세요." }, progression: { base: 65, unit: "총" } },
+        "pull_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "프론트 풀다운", example: "예: 해머스트랭스 프론트 풀다운", cue: { primary: "광배 전체", tip: "언더핸드 그립으로 핸들을 잡고 광배근 전체를 타겟합니다. 머신의 자연스러운 호(arc) 궤적을 따라 팔꿈치를 아래 및 뒤쪽으로 당겨, 등 중앙부까지 완전히 수축하는 느낌에 집중하세요." }, progression: { base: 40, unit: "한쪽" } },
+        "pull_b_04": { type: "SUB", sets: "3-4세트", reps: "10-12회", defaultName: "원 암 로우", example: "예: 해머스트랭스 원핸드 로우", cue: { primary: "등 전체 볼륨", tip: "등 전체의 '덩어리감'과 볼륨을 채워줍니다. 팔꿈치로 등 중앙을 깊게 찍는다는 느낌으로 당깁니다." }, progression: { base: 18, unit: "한쪽" } }, // Reduced
+        "pull_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "트라이셉스 익스텐션", example: "예: 라잉 트라이셉스 익스텐션", cue: { primary: "삼두 장두", tip: "삼두근의 가장 큰 부위(장두)를 타겟합니다. 팔꿈치를 고정한 채 이마나 정수리 쪽으로 바를 내립니다. EZ바 사용을 권장합니다." }, progression: { base: 15, unit: "kg" } }, // Reduced
+
+        // --- PULL C ---
+        "pull_c_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 덤벨 풀오버", cue: { primary: "광배근", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
+        "pull_c_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운", cue: { primary: "활성화", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
+        "pull_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "랫풀다운 (패러럴)", example: "예: 랫풀다운 (맥그립 중간)", cue: { primary: "광배 전체/볼륨", tip: "광배근 전체의 볼륨과 매스를 키우는 올라운더 그립. 가슴을 열고 팔꿈치를 아래쪽 옆구리로 당긴다는 느낌으로 수행합니다." }, progression: { base: 65, unit: "총" } },
+        "pull_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "원 암 케이블 로우", example: "예: 시티드 케이블 로우 (원암)", cue: { primary: "광배근 고립", tip: "케이블의 지속적인 장력으로 광배근을 고립합니다. 당기면서 상체를 살짝 회전시켜 수축감을 극대화하고, 이완 시에는 최대한 늘려주세요." }, progression: { base: 40, unit: "총" } },
+        "pull_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "원 암 풀다운", example: "예: 해머 프론트 풀다운 (파나타 스타일)", cue: { primary: "광배 바깥쪽/이완", tip: "원 암 방식으로 견갑골을 최대로 움직여, 일반 풀다운으로는 불가능한 '최대 이완' 지점을 공략해 등 너비감을 만드는 운동입니다.<br>스트랩형 원핸드 그립 연결 후, 운동하는 쪽 어깨를 앞으로 최대한 밀어내 광배근 바깥쪽의 최대 이완 지점을 찾고, 그 지점에서부터 팔꿈치를 골반 쪽으로 당겨 등 하부까지 수축합니다." }, progression: { base: 30, unit: "한쪽" } },
+        "pull_c_04": { type: "SUB", sets: "3-4세트", reps: "15-20회", defaultName: "백 익스텐션", example: "예: 백 익스텐션", cue: { primary: "기립근/하부", tip: "허리 라인의 선명함과 깊이감을 만듭니다. 엉덩이와 등의 힘으로 상체를 들어올리고, 허리가 과하게 꺾이지 않도록 주의합니다." }, progression: { base: 0, unit: "맨몸" } },
+        "pull_c_05": { type: "FINISH", sets: "2-3세트", reps: "8-10회", defaultName: "오버헤드 익스텐션", example: "예: 뉴텍 오버헤드 익스텐션", cue: { primary: "삼두 장두", tip: "시작 저항이 매우 강한 머신입니다. 처음에는 원판 없이 시작하여 자극에 적응하세요. 팔꿈치를 고정하고, 천천히 이완하며 삼두근 장두가 최대로 늘어나는 것을 느끼는 것이 핵심입니다." }, progression: { base: 0, unit: "kg" } },
+
+        // --- PUSH A ---
+        "push_a_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우 (가볍게)", cue: { primary: "후면 활성화", tip: "견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
+        "push_a_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
+        "push_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 프레스 (스미스)", example: "예: 로우 인클라인 스미스 프레스", cue: { primary: "윗가슴 (쇄골지)", tip: "벤치 각도를 낮게(약 15-20도) 설정하여 윗가슴 상부를 타겟합니다. 등을 패드에 단단히 고정하되, 견갑은 자연스럽게 움직이도록 허용하여 윗가슴의 최대 이완과 수축에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
+        "push_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 프레스 (머신)", example: "예: 해머스트랭스 인클라인 프레스", cue: { primary: "윗가슴", tip: "자연스러운 아크 궤적을 이용해 윗가슴에 새로운 자극을 줍니다. 등을 패드에 고정해 안정적인 기반을 만들고, 견갑의 자연스러운 움직임을 통해 윗가슴을 최대로 스트레칭하고 수축시키세요." }, progression: { base: 35, unit: "한쪽" } },
+        "push_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스", example: "예: 해머스트랭스 숄더 프레스", cue: { primary: "전면/측면 어깨", tip: "어깨의 전면과 측면을 타겟합니다. 등을 패드에 기대어 몸을 안정시키고, 자연스러운 어깨와 견갑의 리듬을 이용해 어깨 근육을 끝까지 수축하고 이완시키는 것에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
+        "push_a_04": { type: "SUB", sets: "3-4세트", reps: "실패지점까지", defaultName: "딥스", example: "예: 딥스 머신", cue: { primary: "아랫가슴/삼두", tip: "아랫가슴과 삼두근에 볼륨을 더합니다. 상체를 숙일수록 아랫가슴에 자극이 집중됩니다. 이완 시 견갑이 자연스럽게 상승하며 가슴이 최대로 늘어나는 것을 느끼세요." }, progression: { base: 0, unit: "맨몸" } },
+        "push_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "이두 컬", example: "예: 암 컬 머신 (투핸드)", cue: { primary: "이두근", tip: "팔을 패드에 완전히 고정하고, 반동 없이 이두근의 힘으로만 핸들을 들어올려 강하게 수축합니다." }, progression: { base: 15, unit: "kg" } }, // Reduced
+
+        // --- PUSH B ---
+        "push_b_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우", cue: { primary: "후면 활성화", tip: "견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
+        "push_b_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
+        "push_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스", example: "예: 해머 시티드 체스트 프레스", cue: { primary: "가슴 중앙", tip: "가슴 중앙부의 볼륨감을 키우는 것이 목표입니다. 등을 패드에 완전히 고정하여 안정적인 기반을 만들되, 견갑의 자연스러운 움직임을 허용하여 가슴 근육의 최대 수축과 이완에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
+        "push_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "디클라인 프레스", example: "예: 너틸러스 프레스 (디클라인)", cue: { primary: "아랫가슴", tip: "아랫가슴 라인을 선명하게 만듭니다. 등을 패드에 단단히 고정하되, 견갑의 움직임을 허용하여 팔꿈치를 아래로 내릴 때 아랫가슴이 최대로 스트레칭되는 느낌에 집중하세요." }, progression: { base: 70, unit: "총" } },
+        "push_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (스미스)", example: "예: 스미스 숄더 프레스", cue: { primary: "전면 어깨", tip: "바가 턱 끝이나 쇄골까지 오도록 깊게 내립니다. 등을 벤치에 기대어 안정성을 확보하고, 견갑의 자연스러운 상방회전을 이용해 어깨 근육을 끝까지 쥐어짜는 느낌에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
+        "push_b_04": { type: "SUB", sets: "3-4세트", reps: "15-20회", defaultName: "케이블 크로스오버", example: "예: 케이블 크로스오버", cue: { primary: "가슴 안쪽", tip: "가슴 중앙부와 안쪽 라인을 만드는 것이 목표입니다.<br>1. 케이블 풀리를 가슴 중앙 높이에 맞추고 D-핸들을 잡습니다.<br>2. 몸을 앞으로 살짝 숙여 안정적인 자세를 잡습니다.<br>3. 팔꿈치를 살짝 구부린 상태로, 큰 원을 그리듯 가슴 중앙으로 모아주며 강하게 수축합니다." }, progression: { base: 10, unit: "kg" } },
+        "push_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "원 암 컬", example: "예: 암 컬 머신 (원핸드)", cue: { primary: "이두근", tip: "한 팔씩 수행하여 좌우 불균형을 교정하고 최고의 마인드-머슬 커넥션을 이끌어냅니다." }, progression: { base: 8, unit: "한쪽" } }, // Reduced
+
+        // --- PUSH C ---
+        "push_c_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우", cue: { primary: "후면 활성화", tip: "견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
+        "push_c_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
+        "push_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "덤벨 인클라인 (뉴트럴)", example: "예: 뉴트럴그립 덤벨 인클라인", cue: { primary: "윗가슴", tip: "벤치 각도를 30도로 설정합니다. 어깨 관절의 부담을 줄이면서 윗가슴 상부(쇄골지)를 집중적으로 공략하는 것이 핵심입니다. 등을 벤치에 단단히 고정하고, 팔꿈치를 과도하게 벌리지 말고 몸통에 가까운 궤적으로 움직이세요. 덤벨을 내릴 때 윗가슴이 최대로 늘어나는 것을 느끼고, 들어 올릴 때는 윗가슴을 강하게 쥐어짠다는 느낌에 집중하세요." }, progression: { base: 26, unit: "한쪽" } },
+        "push_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스 (뉴트럴)", example: "예: 너틸러스 체스트 (뉴트럴)", cue: { primary: "가슴 안쪽", tip: "V자 그립으로 가슴 중앙부를 강하게 수축시킵니다. 등을 패드에 기대 안정성을 확보하고, 프레스 동작 마지막에 견갑을 살짝 전인(내밀어)시켜 가슴 안쪽까지 완전히 쥐어짜주세요." }, progression: { base: 70, unit: "총" } },
+        "push_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (뉴트럴)", example: "예: 너틸러스 숄더 (뉴트럴)", cue: { primary: "전면/측면 어깨", tip: "정자세로 앉아 등받이에 등을 완전히 밀착합니다. 뉴트럴 그립을 잡고 어깨를 아래로 누른 상태를 유지하며, 머신 궤적을 따라 핸들을 위+안쪽으로 밀어 올립니다. 천천히 저항하며 시작 위치로 돌아옵니다." }, progression: { base: 35, unit: "총" } },
+        "push_c_04": { type: "SUB", sets: "3-4세트", reps: "10-15회", defaultName: "사이드 레터럴 레이즈", example: "예: 사레레 머신", cue: { primary: "측면 삼각근", tip: "어깨 측면(측면 삼각근)을 완벽하게 고립하여 어깨 프레임을 넓히는 것이 목표입니다. 팔꿈치로 패드를 들어올린다는 느낌으로 수행하고, 승모근이 으쓱하지 않도록 통제하는 것이 핵심입니다." }, progression: { base: 15, unit: "kg" } }, // Reduced
+        "push_c_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "인클라인 컬", example: "예: 인클라인 케이블 컬", cue: { primary: "이두 장두", tip: "벤치에 누워 이두근을 최대로 이완시킨 상태에서 시작하여, 이두근의 장두(긴 갈래)를 집중적으로 공략합니다. 지속적인 장력을 느끼는 것이 핵심입니다." }, progression: { base: 7, unit: "한쪽" } }, // Reduced
+
+        // --- LEG A ---
+        "leg_a_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 노틸러스 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
+        "leg_a_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 노틸러스 아웃 타이", cue: { primary: "중둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
+        "leg_a_w3": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "레그 익스텐션 (웜업)", example: "예: 레그 익스텐션 (가볍게)", cue: { primary: "무릎 예열", tip: "무릎 관절을 예열하고 대퇴사두에 혈류를 보냅니다." }, progression: { base: 0, unit: "text" } },
+        "leg_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "스쿼트 (스미스)", example: "예: 스미스 머신 스쿼트", cue: { primary: "하체 전반", tip: "발을 어깨너비로 벌리고, 허리를 편 상태를 유지하며 깊게 앉습니다. 하체 전반의 힘을 사용하세요." }, progression: { base: 40, unit: "한쪽" } },
+        "leg_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스", example: "예: 레그 프레스 (기본)", cue: { primary: "대퇴사두/둔근", tip: "발을 발판 중앙, 어깨너비로 둡니다. 발뒤꿈치로 민다는 느낌으로 허벅지 전체에 균형잡힌 부하를 전달합니다." }, progression: { base: 120, unit: "총" } },
+        "leg_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션 (무겁게)", cue: { primary: "대퇴사두", tip: "다리를 완전히 폈을 때 1~2초간 멈춰 대퇴사두를 강하게 쥐어짭니다. 엉덩이가 뜨지 않도록 주의하세요." }, progression: { base: 25, unit: "kg" } }, // Reduced
+        "leg_a_05": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "뒤꿈치를 엉덩이 쪽으로 당길 때 햄스트링을 강하게 수축하고, 천천히 저항을 느끼면서 다리를 폅니다." }, progression: { base: 25, unit: "kg" } }, // Reduced
+        "leg_a_06": { type: "FINISH", sets: "3-4세트", reps: "15-20회", defaultName: "카프 레이즈", example: "예: 레그프레스 카프레이즈", cue: { primary: "종아리", tip: "발끝을 발판 아래쪽에 두고, 발뒤꿈치를 최대한 이완시켰다가 발끝으로 강하게 밀어 종아리를 수축합니다." }, progression: { base: 30, unit: "kg" } }, // Reduced (60->30)
+
+        // --- LEG B ---
+        "leg_b_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
+        "leg_b_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 아웃 타이", cue: { primary: "둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
+        "leg_b_w3": { type: "WARMUP", sets: "3세트", reps: "15-20회", defaultName: "익스텐션 (선피로)", example: "예: 레그 익스텐션", cue: { primary: "대퇴사두 선피로", tip: "가벼운 무게로 대퇴사두에 혈류를 집중시킵니다. 펌핑감을 느끼는 데 집중하세요." }, progression: { base: 0, unit: "text" } },
+        "leg_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스 (사두)", example: "예: 레그 프레스 (발 아래)", cue: { primary: "대퇴사두", tip: "발을 발판 아래쪽에 어깨너비보다 좁게 두어 대퇴사두에 자극을 집중시킵니다. 무릎 통증에 주의하며 가동범위를 조절하세요." }, progression: { base: 120, unit: "총" } },
+        "leg_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "핵스쿼트", example: "예: 싸이벡스 핵스쿼트", cue: { primary: "대퇴사두 고립", tip: "안정적인 궤적을 이용해 대퇴사두에 강한 고립감을 줍니다. 등을 패드에 완전히 고정하고 엉덩이가 뜨지 않게 하며, 허리가 둥글게 말리기 직전까지만 내려가세요." }, progression: { base: 40, unit: "총" } },
+        "leg_b_03": { type: "SUB", sets: "3세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션", cue: { primary: "대퇴사두 털기", tip: "무거운 무게로 대퇴사두를 완전히 털어냅니다. 최대 수축 지점에서 1~2초 멈춰주세요." }, progression: { base: 25, unit: "kg" } }, // Reduced
+        "leg_b_04": { type: "FINISH", sets: "3세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "균형을 위해 햄스트링을 가볍게 자극하며 마무리합니다. 네거티브 동작에 집중하세요." }, progression: { base: 25, unit: "kg" } }, // Reduced
+
+        // --- LEG C ---
+        "leg_c_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
+        "leg_c_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 아웃 타이", cue: { primary: "둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
+        "leg_c_w3": { type: "WARMUP", sets: "3세트", reps: "15-20회", defaultName: "레그 컬 (선피로)", example: "예: 레그 컬", cue: { primary: "햄스트링 선피로", tip: "가벼운 무게로 햄스트링에 먼저 자극을 줍니다. 펌핑감에 집중하세요." }, progression: { base: 0, unit: "text" } },
+        "leg_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스 (후면)", example: "예: 레그 프레스 (발 위)", cue: { primary: "햄스트링/둔근", tip: "발을 발판 위쪽에 넓게 두어 내전근을 포함한 후면 사슬 전체의 볼륨감에 집중합니다. 엉덩이가 패드에서 뜨지 않는 깊이까지만 내려가세요." }, progression: { base: 120, unit: "총" } },
+        "leg_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "리버스 V스쿼트", example: "예: V스쿼트 (리버스)", cue: { primary: "후면 사슬", tip: "머신을 마주보고 서서 어깨를 고리 모양의 패드에 견착합니다. 발을 어깨너비 또는 약간 좁게 두고, 엉덩이를 뒤로 깊게 빼며 앉아 햄스트링과 둔근의 최대 이완과 고립에 집중하세요. 발뒤꿈치로 강하게 밀어 올라오며 둔근을 수축합니다." }, progression: { base: 40, unit: "총" } },
+        "leg_c_03": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 컬 (보조)", example: "예: 레그 컬", cue: { primary: "햄스트링 볼륨", tip: "무거운 무게로 햄스트링 볼륨을 극대화합니다. 최대 수축 지점에서 1~2초 멈춰주세요." }, progression: { base: 25, unit: "kg" } }, // Reduced
+        "leg_c_04": { type: "FINISH", sets: "3-4세트", reps: "12-15회", defaultName: "힙 쓰러스트", example: "예: 머신 힙 쓰러스트", cue: { primary: "둔근", tip: "패드를 골반에 위치시키고, 발뒤꿈치로 강하게 밀어 엉덩이를 최대로 수축합니다. 정점에서 1~2초간 멈춰주세요." }, progression: { base: 30, unit: "kg" } } // Reduced
+    };
+
+    const ROUTINES = {
+        A: {
+            pull: ["pull_a_w1", "pull_a_w2", "pull_a_01", "pull_a_02", "pull_a_03", "pull_a_04", "pull_a_05"],
+            push: ["push_a_w1", "push_a_w2", "push_a_01", "push_a_02", "push_a_03", "push_a_04", "push_a_05"],
+            leg: ["leg_a_w1", "leg_a_w2", "leg_a_w3", "leg_a_02", "leg_a_03", "leg_a_04", "leg_a_05", "leg_a_06"]
+        },
+        B: {
+            pull: ["pull_b_w1", "pull_b_w2", "pull_b_01", "pull_b_02", "pull_b_03", "pull_b_04", "pull_b_05"],
+            push: ["push_b_w1", "push_b_w2", "push_b_01", "push_b_02", "push_b_03", "push_b_04", "push_b_05"],
+            leg: ["leg_b_w1", "leg_b_w2", "leg_b_w3", "leg_b_01", "leg_b_02", "leg_b_03", "leg_b_04"]
+        },
+        C: {
+            pull: ["pull_c_w1", "pull_c_w2", "pull_c_01", "pull_c_02", "pull_c_03", "pull_c_04", "pull_c_05"],
+            push: ["push_c_w1", "push_c_w2", "push_c_01", "push_c_02", "push_c_03", "push_c_04", "push_c_05"],
+            leg: ["leg_c_w1", "leg_c_w2", "leg_c_w3", "leg_c_01", "leg_c_02", "leg_c_03", "leg_c_04"]
+        }
+    };
+
+    // ==========================================
+    // 2. STATE MANAGEMENT & WAKE LOCK & AUDIO
+    // ==========================================
+    const STORE_KEY = "v4_8_workout_data"; // Increased version
+    let state = {
+        week: 1, cycle: 1, day: 'pull',
+        customs: {}, // { tplId: { name, note, unit: 'kg'|'lbs' } }
+        records: {},  // { tplId: [ { date, week, cycle, phase, sets: [{w, r}] } ] }
+        hideGuide: false
+    };
+
+    let wakeLock = null;
+    let audioCtx = null;
+
+    async function acquireWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock active');
+                wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock released');
+                });
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        }
+    }
+
+    // Audio Context Setup
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playBeep() {
+        if (!audioCtx) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        
+        oscillator.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+        oscillator.stop(audioCtx.currentTime + 0.5);
+    }
+
+    // Re-acquire lock on visibility change
+    document.addEventListener('visibilitychange', async () => {
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            await acquireWakeLock();
+        }
+    });
+
+    // Init features on first interaction
+    function initFeatures() {
+        initAudio();
+        acquireWakeLock();
+        document.removeEventListener('click', initFeatures);
+        document.removeEventListener('touchstart', initFeatures);
+    }
+    document.addEventListener('click', initFeatures);
+    document.addEventListener('touchstart', initFeatures);
+
+
+    function loadData() {
+        const saved = localStorage.getItem(STORE_KEY);
+        if (saved) state = { ...state, ...JSON.parse(saved) };
+    }
+    function saveData() {
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    }
+    function resetData() {
+        if(confirm('모든 데이터를 초기화하시겠습니까?')) {
+            localStorage.removeItem(STORE_KEY);
+            location.reload();
+        }
+    }
+
+    // ==========================================
+    // 3. CORE LOGIC
+    // ==========================================
+    const round2_5 = n => Math.round(n / 2.5) * 2.5;
+    const e1rm = (w, r) => r > 1 ? w * (1 + r / 30) : w;
+
+    function getPhaseInfo(week, cycle) {
+        if (week === 13) return { phase: "디로딩", type: "A" };
+        const isBlock = cycle % 2 !== 0;
+        let phase = "강화 주기";
+        let type = ["A", "B", "C"][(week - 1) % 3];
+        if (isBlock) {
+            if ((week >= 4 && week <= 6) || (week >= 10 && week <= 12)) phase = "축적 주기";
+        } else {
+            phase = (week % 2 !== 0) ? "강화 주기" : "축적 주기";
+            type = ["A", "B", "C"][Math.floor((week - 1) / 2) % 3];
+        }
+        return { phase, type };
+    }
+
+    // Determine Rest Time based on Exercise Type & Phase
+    function getRestTime(tplId, phase) {
+        const tpl = TEMPLATES[tplId];
+        if (!tpl) return 90; // default
+
+        // Warmup -> 60s
+        if (tpl.type === 'WARMUP') return 60;
+
+        // Main Exercise
+        if (tpl.type === 'MAIN') {
+            // Strength Phase -> 150s (2m 30s)
+            if (phase === '강화 주기') return 150;
+            // Accumulation Phase -> 90s (1m 30s)
+            return 90; 
+        }
+
+        // Accessory / Finisher -> 90s
+        return 90;
+    }
+
+    function calculateGoal(tplId) {
+        const tpl = TEMPLATES[tplId];
+        const { phase } = getPhaseInfo(state.week, state.cycle);
+        const history = state.records[tplId] || [];
+        const custom = state.customs[tplId] || {};
+        const isLbs = custom.unit === 'lbs';
+        
+        const fmtW = (kgVal) => isLbs ? Math.round(kgVal * 2.20462) : kgVal;
+        const unitText = isLbs ? 'lbs' : 'kg';
+
+        // ---- Filter history to exclude CURRENT week records for goal calculation ----
+        const validHistory = history.filter(r => {
+            if (r.cycle < state.cycle) return true;
+            if (r.cycle === state.cycle && r.week < state.week) return true;
+            return false;
+        });
+
+        const targetReps = tpl.reps || "12-15회";
+        const targetSets = tpl.sets || "3-4세트";
+
+        if (tpl.type === 'WARMUP') {
+             // If history exists, use last warmup weight
+             if (validHistory.length > 0) {
+                 // Sort by date to find the very last session
+                 const sortedHistory = [...validHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+                 const lastRec = sortedHistory[sortedHistory.length - 1];
+                 if (lastRec && lastRec.sets.length > 0) {
+                     const lastSet = lastRec.sets[lastRec.sets.length - 1];
+                     if (lastSet.w) {
+                         return `🔥 목표: ${lastSet.w}${unitText} x ${targetReps} (${targetSets})`;
+                     }
+                 }
+             }
+             return `${targetReps} (${targetSets})`; 
+        }
+
+        if (tpl.progression.unit === 'text') {
+            return `${tpl.reps} (${tpl.sets})`;
+        }
+
+        if (tpl.type === 'MAIN') {
+            if (phase === "디로딩") return "회복: 평소 워킹 중량의 50% (자세 집중)";
+
+            let peak = 0;
+            // Scan valid history for peak
+            validHistory.forEach(rec => rec.sets.forEach(s => {
+                const e = e1rm(Number(s.w), Number(s.r));
+                if (e > peak) peak = e;
+            }));
+
+            if (peak === 0) {
+                const startW = fmtW(tpl.progression.base);
+                return `🔥 목표 설정: ${startW}${unitText} ${tpl.progression.unit === '한쪽' ? '(한쪽)' : ''}으로 시작`;
+            }
+
+            if (phase === "축적 주기") {
+                let target = peak * 0.7;
+                // Rounding for accumulation (2.5kg or 5lbs step)
+                if (isLbs) target = Math.round(target / 5) * 5;
+                else target = round2_5(target);
+                
+                return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트)`;
+            }
+
+            const lastStrength = validHistory.filter(r => r.phase === "강화 주기").sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+            if (!lastStrength) {
+                let startW = peak * 0.9;
+                if(isLbs) startW = Math.round(startW / 5) * 5;
+                else startW = round2_5(startW);
+                return `🔥 강화 목표: 탑 세트 ${startW}${unitText} x AMRAP`;
+            }
+
+            let best = { w: 0, r: 0, e: 0 };
+            lastStrength.sets.forEach(s => {
+                const e = e1rm(Number(s.w), Number(s.r));
+                if (e > best.e) best = { w: Number(s.w), r: Number(s.r), e };
+            });
+
+            let mult = 0.90;
+            const r = best.r;
+            if (r >= 11) mult = 1.05;
+            else if (r >= 8) mult = 1.025;
+            else if (r >= 6) mult = 1.0125;
+            else if (r === 5) mult = 1.0;
+            else if (r === 4) mult = 0.975;
+            else if (r === 3) mult = 0.95;
+
+            const nextE1rm = best.e * mult;
+            let nextW = nextE1rm / 1.2;
+            
+            if(isLbs) nextW = Math.round(nextW / 5) * 5; 
+            else nextW = round2_5(nextW);
+
+            if (mult > 1.0 && nextW <= best.w) nextW = best.w + (isLbs ? 5 : 2.5);
+
+            const backoff = isLbs ? Math.round(nextW * 0.8 / 5) * 5 : round2_5(nextW * 0.8);
+            return `🔥 강화: Top 1세트(${nextW}${unitText}) / Back-off 2세트(${backoff}${unitText})`;
+        }
+
+        // Sub/Finish Logic
+        if (validHistory.length === 0) {
+            const startW = fmtW(tpl.progression.base);
+            return `🔥 목표: ${startW}${unitText} x ${targetReps} (${targetSets})`;
+        }
+        // Get the latest valid record
+        const sortedHistory = [...validHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+        const lastRec = sortedHistory[sortedHistory.length-1];
+        const lastSet = lastRec ? lastRec.sets[lastRec.sets.length-1] : null;
+        
+        const baseVal = isLbs ? tpl.progression.base * 2.2 : tpl.progression.base;
+        
+        if (lastSet && lastSet.r >= 12 && Number(lastSet.w) >= baseVal) {
+            const inc = isLbs ? 5 : 2.5;
+            return `🔥 증량 도전: ${Number(lastSet.w) + inc}${unitText} (${targetSets})`;
+        }
+        if (lastSet) {
+             return `🔥 유지 목표: ${lastSet.w}${unitText} (${targetSets})`;
+        }
+        return `🔥 목표: ${fmtW(tpl.progression.base)}${unitText} (${targetSets})`;
+    }
+
+    // ==========================================
+    // 4. UI RENDERING
+    // ==========================================
+    function renderWeekScroller() {
+        const el = document.getElementById('week-scroller');
+        
+        if (el.children.length === 0) {
+            for (let i = 1; i <= 13; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = `${i}주`;
+                btn.onclick = () => { 
+                    state.week = i; 
+                    saveData(); 
+                    render(); 
+                };
+                el.appendChild(btn);
+            }
+        }
+
+        Array.from(el.children).forEach((btn, index) => {
+            const weekNum = index + 1;
+            const isActive = weekNum === state.week;
+            btn.className = `flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 ${isActive ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-105' : 'bg-white text-slate-400 border border-slate-100 hover:bg-slate-50'}`;
+            
+            if (isActive) {
+                btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        });
+    }
+    
+    function scrollWeeks(direction) {
+        const el = document.getElementById('week-scroller');
+        const scrollAmount = 150; 
+        el.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+    }
+
+    function changeCycle(delta) {
+        const newCycle = state.cycle + delta;
+        if (newCycle < 1) return;
+        state.cycle = newCycle;
+        saveData();
+        render();
+    }
+
+    function render() {
+        renderWeekScroller();
+
+        const { phase, type } = getPhaseInfo(state.week, state.cycle);
+        document.getElementById('cycle-badge').textContent = `C${state.cycle}: ${state.cycle%2!==0 ? '블록 주기' : '파동 주기'}`;
+        document.getElementById('phase-badge').textContent = phase;
+        document.getElementById('phase-badge').className = `px-2 py-0.5 rounded text-[10px] font-bold text-white backdrop-blur-sm shadow-sm ${phase.includes('강화') ? 'bg-red-500/80' : phase === '디로딩' ? 'bg-slate-500/80' : 'bg-green-500/80'}`;
+        
+        document.getElementById('routine-title').textContent = `${state.day.toUpperCase()} ${type}`;
+        
+        let subText = "균형 잡힌 발달";
+        if(type === 'A') {
+            if(state.day === 'pull') subText = "등 상부 두께감 & 분리도";
+            else if(state.day === 'push') subText = "윗가슴 & 어깨 전면";
+            else subText = "하체 전반 & 스쿼트";
+        } else if(type === 'B') {
+            if(state.day === 'pull') subText = "광배근 하부 & 등 전체";
+            else if(state.day === 'push') subText = "가슴 중앙 & 아랫가슴";
+            else subText = "대퇴사두 집중";
+        } else if(type === 'C') {
+            if(state.day === 'pull') subText = "등 너비 & 최대 이완";
+            else if(state.day === 'push') subText = "윗가슴 & 어깨 고립";
+            else subText = "후면 사슬 & 둔근";
+        }
+        document.getElementById('routine-subtitle').textContent = subText;
+        
+        ['pull','push','leg'].forEach(d => {
+            const btn = document.getElementById(`btn-${d}`);
+            const isActive = state.day === d;
+            btn.className = `day-btn py-2 text-sm font-bold rounded-lg transition-all ${isActive ? 'bg-blue-100 text-blue-600 shadow-inner' : 'bg-white text-slate-400 hover:bg-slate-50'}`;
+        });
+
+        const listEl = document.getElementById('exercise-list');
+        listEl.innerHTML = '';
+        
+        const routineList = ROUTINES[type]?.[state.day] || [];
+        
+        routineList.forEach((tplId, index) => {
+            if (!TEMPLATES[tplId]) return;
+            const tpl = TEMPLATES[tplId];
+            const custom = state.customs[tplId] || {};
+            const goalText = calculateGoal(tplId);
+            const isLbs = custom.unit === 'lbs';
+            
+            const history = state.records[tplId] || [];
+            const todayRec = history.find(r => r.week === state.week && r.cycle === state.cycle && r.day === state.day);
+            const sets = todayRec ? todayRec.sets : [{w:'', r:''}];
+
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-2xl p-5 border border-slate-100 shadow-sm relative card-enter";
+            card.style.animationDelay = `${index * 0.05}s`;
+            
+            let typeBadgeClass = 'bg-slate-100 text-slate-500';
+            if (tpl.type === 'MAIN') typeBadgeClass = 'bg-blue-50 text-blue-600';
+            else if (tpl.type === 'WARMUP') typeBadgeClass = 'bg-amber-50 text-amber-600';
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div class="pr-8">
+                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase mb-1 tracking-wider ${typeBadgeClass}">${tpl.type}</span>
+                        <h3 class="text-lg font-bold text-slate-900 leading-tight">${custom.name || tpl.defaultName}</h3>
+                        ${custom.name ? `<p class="text-xs text-slate-400 mt-0.5 font-medium">Original: ${tpl.defaultName}</p>` : ''}
+                    </div>
+                    <div class="absolute top-4 right-4 flex gap-1">
+                        <button onclick="openHistory('${tplId}')" class="text-slate-300 hover:text-blue-500 p-2" title="과거 기록">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </button>
+                        <button onclick="openModal('${tplId}')" class="text-slate-300 hover:text-slate-500 p-2 -mr-2" title="설정">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-xl mb-4 text-sm border border-slate-100">
+                    <div class="flex gap-2 mb-1">
+                        <span class="text-xs font-bold text-slate-500 whitespace-nowrap">🎯 타겟</span>
+                        <span class="text-xs text-slate-700">${tpl.cue.primary}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-2">${tpl.cue.tip}</p>
+                    ${custom.note ? `<p class="text-xs text-amber-600 font-medium border-t border-slate-200 pt-1">📝 ${custom.note}</p>` : ''}
+                    <div class="mt-2 pt-2 border-t border-slate-200 font-bold text-blue-600 text-sm flex items-center gap-1">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        ${goalText}
+                    </div>
+                </div>
+
+                <div id="sets-${tplId}" class="space-y-2"></div>
+                
+                <button onclick="addSet('${tplId}')" class="mt-3 w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-400 font-bold rounded-xl text-xs transition-colors border border-dashed border-slate-200 hover:border-slate-300 hover:text-slate-500">
+                    + 세트 추가
+                </button>
+            `;
+            listEl.appendChild(card);
+            
+            const setContainer = document.getElementById(`sets-${tplId}`);
+            sets.forEach((s, i) => renderSetRow(setContainer, tplId, i+1, s, isLbs));
+        });
+    }
+
+    function renderSetRow(container, tplId, idx, data, isLbs) {
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-2 animate-[fadeIn_0.2s]";
+        const placeholderUnit = isLbs ? 'lbs' : 'kg';
+        
+        div.innerHTML = `
+            <span class="text-[10px] font-bold text-slate-300 w-6 text-center">SET ${idx}</span>
+            <input type="number" value="${data.w}" placeholder="${placeholderUnit}" class="w-16 p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm input-w" onchange="saveRecord('${tplId}')">
+            <input type="number" value="${data.r}" placeholder="회" class="flex-grow p-2 bg-slate-50 border border-slate-200 rounded-lg text-center font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm input-r" onchange="saveRecord('${tplId}')" onblur="checkTimer('${tplId}', this)">
+            <button onclick="removeSet(this, '${tplId}')" class="p-2 text-slate-300 hover:text-red-400"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        `;
+        container.appendChild(div);
+    }
+
+    function setDay(d) { state.day = d; saveData(); render(); }
+    function addSet(tplId) {
+        const c = document.getElementById(`sets-${tplId}`);
+        const custom = state.customs[tplId] || {};
+        renderSetRow(c, tplId, c.children.length + 1, {w:'', r:''}, custom.unit === 'lbs');
+    }
+    function removeSet(btn, tplId) {
+        btn.parentElement.remove();
+        saveRecord(tplId);
+        render();
+    }
+    function saveRecord(tplId) {
+        const rows = document.getElementById(`sets-${tplId}`).children;
+        const sets = [];
+        for(let r of rows) {
+            const w = r.querySelector('.input-w').value;
+            const rVal = r.querySelector('.input-r').value;
+            if(w || rVal) sets.push({w, r:rVal});
+        }
+        if(!state.records[tplId]) state.records[tplId] = [];
+        const { phase } = getPhaseInfo(state.week, state.cycle);
+        const existingIdx = state.records[tplId].findIndex(r => r.week === state.week && r.cycle === state.cycle && r.day === state.day);
+        const newRecord = { date: new Date().toISOString(), week: state.week, cycle: state.cycle, day: state.day, phase, sets };
+        if(existingIdx > -1) {
+            if(sets.length === 0) state.records[tplId].splice(existingIdx, 1);
+            else state.records[tplId][existingIdx] = newRecord;
+        } else if (sets.length > 0) {
+            state.records[tplId].push(newRecord);
+        }
+        saveData();
+    }
+
+    // Modal & History (same as before)
+    let editingId = null;
+    const modalEl = document.getElementById('custom-modal');
+    const modalPanel = document.getElementById('modal-panel');
+    const histEl = document.getElementById('history-modal');
+    const histPanel = document.getElementById('history-panel');
+    const guideEl = document.getElementById('guide-modal');
+    const guidePanel = document.getElementById('guide-panel');
+
+    function openModal(id) {
+        editingId = id;
+        const tpl = TEMPLATES[id];
+        const custom = state.customs[id] || {};
+        document.getElementById('modal-tpl-name').textContent = tpl.defaultName;
+        const nameInput = document.getElementById('custom-name-input');
+        nameInput.value = custom.name || '';
+        nameInput.placeholder = tpl.example || "예: 커스텀 운동 이름";
+        document.getElementById('custom-note-input').value = custom.note || '';
+        const unit = custom.unit || 'kg';
+        document.querySelector(`input[name="custom-unit"][value="${unit}"]`).checked = true;
+        modalEl.classList.remove('invisible', 'opacity-0');
+        modalPanel.classList.remove('translate-y-full');
+    }
+    function closeModal() {
+        modalPanel.classList.add('translate-y-full');
+        modalEl.classList.add('opacity-0');
+        setTimeout(() => modalEl.classList.add('invisible'), 300);
+        editingId = null;
+    }
+    function saveCustomization() {
+        if(!editingId) return;
+        const name = document.getElementById('custom-name-input').value;
+        const note = document.getElementById('custom-note-input').value;
+        const unit = document.querySelector('input[name="custom-unit"]:checked').value;
+        if(name || note || unit !== 'kg') state.customs[editingId] = { name, note, unit };
+        else delete state.customs[editingId];
+        saveData();
+        render();
+        closeModal();
+    }
+    function openHistory(id) {
+        const records = state.records[id] || [];
+        const content = document.getElementById('history-content');
+        const custom = state.customs[id] || {};
+        const isLbs = custom.unit === 'lbs';
+        const unitLabel = isLbs ? 'lbs' : 'kg';
+        content.innerHTML = '';
+        if(records.length === 0) content.innerHTML = '<p class="text-center text-slate-400 py-4">기록이 없습니다.</p>';
+        else {
+            const sorted = [...records].sort((a,b) => new Date(b.date) - new Date(a.date));
+            sorted.forEach(rec => {
+                const dateStr = new Date(rec.date).toLocaleDateString();
+                const setStr = rec.sets.map(s => `${s.w}${unitLabel} x ${s.r}`).join(', ');
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm";
+                div.innerHTML = `<div class="flex justify-between mb-1"><span class="font-bold text-slate-700">${dateStr}</span><span class="text-xs text-slate-400">C${rec.cycle}-W${rec.week} (${rec.phase})</span></div><div class="text-slate-600 font-medium">${setStr}</div>`;
+                content.appendChild(div);
+            });
+        }
+        histEl.classList.remove('invisible', 'opacity-0');
+        histPanel.classList.remove('translate-y-full');
+    }
+    function closeHistoryModal() {
+        histPanel.classList.add('translate-y-full');
+        histEl.classList.add('opacity-0');
+        setTimeout(() => histEl.classList.add('invisible'), 300);
+    }
+
+    // Guide Modal
+    function openGuide() {
+        guideEl.classList.remove('invisible', 'opacity-0');
+        guidePanel.classList.remove('scale-95');
+    }
+    function closeGuide() {
+        const checked = document.getElementById('guide-checkbox').checked;
+        if (checked) {
+            state.hideGuide = true;
+            saveData();
+        }
+        guidePanel.classList.add('scale-95');
+        guideEl.classList.add('opacity-0');
+        setTimeout(() => guideEl.classList.add('invisible'), 300);
+    }
+
+    // --- Timer Logic (Smart Countdown) ---
+    let timerInt;
+    
+    function checkTimer(tplId, input) {
+        const row = input.parentElement;
+        const w = row.querySelector('.input-w').value;
+        if(input.value && w) {
+            startTimer(tplId);
+        }
+    }
+
+    function startTimer(tplId) {
+        clearInterval(timerInt);
+        initAudio(); // Ensure audio context is ready
+        acquireWakeLock(); // Re-ensure wake lock
+
+        const tpl = TEMPLATES[tplId];
+        const custom = state.customs[tplId] || {};
+        const { phase } = getPhaseInfo(state.week, state.cycle);
+        
+        // 1. Get Duration
+        const duration = getRestTime(tplId, phase);
+        let remaining = duration;
+
+        // 2. Show UI
+        const banner = document.getElementById('timer-banner');
+        document.getElementById('timer-exercise-name').textContent = custom.name || tpl.defaultName;
+        document.getElementById('timer-status-text').textContent = "Resting";
+        document.getElementById('timer-status-text').className = "text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5";
+        banner.classList.remove('hide', 'timer-finished'); // Reset flash
+        banner.classList.add('show');
+        
+        // 3. Update Display Function
+        const updateDisplay = () => {
+            const m = Math.floor(remaining / 60).toString().padStart(2,'0');
+            const s = (remaining % 60).toString().padStart(2,'0');
+            document.getElementById('timer-display').textContent = `${m}:${s}`;
+        };
+        updateDisplay();
+
+        // 4. Interval
+        timerInt = setInterval(() => {
+            remaining--;
+            if (remaining >= 0) {
+                updateDisplay();
+            } else {
+                // Time's up!
+                clearInterval(timerInt);
+                playBeep();
+                playBeep(); // Beep twice
+                document.getElementById('timer-status-text').textContent = "Ready!";
+                document.getElementById('timer-status-text').className = "text-[10px] text-green-400 font-bold uppercase tracking-wider mb-0.5";
+                banner.classList.add('timer-finished'); // Add flash effect
+                
+                // Optional: Vibrate
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            }
+        }, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(timerInt);
+        document.getElementById('timer-banner').classList.remove('show', 'timer-finished');
+        document.getElementById('timer-banner').classList.add('hide');
+    }
+
+    // INIT
+    window.onload = () => {
+        loadData();
+        render(); 
+        
+        // Show guide if not hidden
+        if (!state.hideGuide) {
+            setTimeout(openGuide, 500); // Small delay for UX
+        }
+    };
+</script>
+</body>
+</html>
