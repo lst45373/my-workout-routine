@@ -507,18 +507,26 @@
         // 2. ALL sets met 'maxReps' (Strict Aegis for Hypertrophy)
         // 3. All sets used at least 'lastAttemptWeight'
         
-        let success = true;
-        if (lastRec.sets.length < minSets) success = false;
-        else {
-            for (let i = 0; i < lastRec.sets.length; i++) {
-                const s = lastRec.sets[i];
-                // Must hit the UPPER bound of reps to increase weight
-                if (s.r < maxReps || s.w < lastAttemptWeight) {
-                    success = false;
-                    break;
-                }
-            }
+// ✅ 4세트 모두 성공했을 때만 증량
+const requiredSets = 4;      // 필요 세트 수를 4로 고정
+let success = false;
+
+// 4세트 미만이면 무조건 유지
+if (lastRec.sets.length >= requiredSets) {
+    success = true;
+
+    for (let i = 0; i < requiredSets; i++) {
+        const s = lastRec.sets[i];
+        const reps = Number(s.r) || 0;
+        const weight = Number(s.w) || 0;
+
+        // 한 세트라도 상한 reps 미만이거나, 중량이 기준보다 낮으면 실패
+        if (reps < maxReps || weight < lastAttemptWeight) {
+            success = false;
+            break;
         }
+    }
+}
 
         // Determine Next Weight
         let nextWeight = lastAttemptWeight;
@@ -1073,6 +1081,7 @@ function stopTimer() {
 </script>
 </body>
 </html>
+
 
 
 
