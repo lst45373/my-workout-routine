@@ -488,14 +488,14 @@
         // ---- Initial Measurement (No History) ----
         if (sortedHistory.length === 0) {
              const startW = custom.unit === 'lbs' ? Math.round(currentWeight * 2.2) : currentWeight;
-             return `🔥 초기 측정: ${maxReps}회 반복 가능한 무게(12RM) 찾기`; // Default to max reps for safety/volume
+             return `🔥 초기 측정: ${maxReps}회 반복 가능한 무게 찾기`; // Default to max reps for safety/volume
         }
 
         // Determine the weight used in the last session (assume mostly consistent)
         const lastRec = sortedHistory[sortedHistory.length - 1];
         
         if (!lastRec || lastRec.sets.length === 0) {
-            return `🔥 초기 측정: ${maxReps}회 반복 가능한 무게(12RM) 찾기`;
+            return `🔥 초기 측정: ${maxReps}회 반복 가능한 무게 찾기`;
         }
 
         // We take the weight of the first set as the "attempted weight"
@@ -1113,6 +1113,7 @@ function stopTimer() {
 </script>
 </body>
 </html>
+
 
 
 
