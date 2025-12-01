@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.1</title>
+    <title>FF Growth Protocol v1.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -19,6 +19,7 @@
         .timer-finished { animation: flash 0.5s 4; }
         @keyframes timerFlash { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
         .timer-flash { animation: timerFlash 0.45s ease-in-out 4; }
+        /* iOS Safe Area */
         body { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
         header { padding-top: env(safe-area-inset-top); }
         #timer-banner { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
@@ -30,22 +31,28 @@
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative bg-white sm:shadow-xl sm:my-4 sm:rounded-2xl overflow-hidden">
         
         <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30">
-            <div class="px-4 py-3 flex justify-between items-center">
-                <div>
-                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">FF Growth <span class="text-blue-600">v1.1</span></h1>
-                    <button onclick="toggleLevel()" id="level-display" class="text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded mt-0.5 hover:bg-slate-700 transition shadow-sm">
-                        Lv. ADVANCED
-                    </button>
+            <div class="px-4 py-3">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h1 class="text-lg font-bold text-slate-900 tracking-tight">FF Growth <span class="text-blue-600">v1.5</span></h1>
+                        <p class="text-[10px] text-slate-400 font-medium">Auto-Regulation Training</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openGuide()" class="text-slate-400 border border-slate-200 p-1.5 rounded-full hover:bg-slate-50 hover:text-blue-500 transition">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        </button>
+                        <button onclick="resetData()" class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 hover:text-red-500 transition">초기화</button>
+                    </div>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="openGuide()" class="text-slate-400 border border-slate-200 p-1.5 rounded-full hover:bg-slate-50 hover:text-blue-500 transition">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    </button>
-                    <button onclick="resetData()" class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 hover:text-red-500 transition">초기화</button>
+
+                <div class="bg-slate-100 p-1 rounded-lg flex mb-1 shadow-inner">
+                    <button onclick="setLevel('BEGINNER')" id="btn-lvl-BEGINNER" class="flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all duration-200 text-center">초급</button>
+                    <button onclick="setLevel('INTERMEDIATE')" id="btn-lvl-INTERMEDIATE" class="flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all duration-200 text-center">중급</button>
+                    <button onclick="setLevel('ADVANCED')" id="btn-lvl-ADVANCED" class="flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all duration-200 text-center">고급</button>
                 </div>
             </div>
             
-            <div class="border-b border-slate-100 flex items-center bg-white">
+            <div class="border-b border-slate-100 flex items-center bg-white border-t border-slate-50">
                 <button onclick="changeWeek(-1)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
@@ -131,12 +138,12 @@
                        <span class="bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded">NEW</span> 난이도 설정
                    </h4>
                    <p class="text-slate-600 mb-2">
-                       화면 좌측 상단의 <span class="font-bold bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px]">Lv.</span> 배지를 눌러 내 수준에 맞는 루틴을 선택하세요.
+                       화면 상단의 <strong>레벨 버튼</strong>을 눌러 내 수준에 맞는 루틴과 <strong>권장 시작 무게</strong>를 선택하세요.
                    </p>
                    <ul class="list-disc list-inside mt-2 space-y-1 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                       <li><strong class="text-green-600">Beginner:</strong> 핵심 4~5종목 (짧고 굵게)</li>
-                       <li><strong class="text-blue-600">Intermediate:</strong> 표준 5~6종목 (균형 발달)</li>
-                       <li><strong class="text-slate-800">Advanced:</strong> 전체 7~8종목 (최대 볼륨)</li>
+                       <li><strong class="text-green-600">초급 (Beginner):</strong> 핵심 4~5종목 / 낮은 시작 중량</li>
+                       <li><strong class="text-blue-600">중급 (Intermediate):</strong> 표준 5~6종목 / 중간 시작 중량</li>
+                       <li><strong class="text-slate-800">고급 (Advanced):</strong> 전체 7~8종목 / 높은 시작 중량</li>
                    </ul>
                 </div>
 
@@ -230,89 +237,79 @@
         // --- PULL A ---
         "pull_a_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 노틸러스 풀오버", cue: { primary: "광배근 스트레칭", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
         "pull_a_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운 (가볍게)", cue: { primary: "견갑 하강", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
-        "pull_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "수평 당기기 (T바)", example: "예: 해머스트랭스 래터럴 로우 (T바)", cue: { primary: "승모/능형근/후면삼각근", tip: "등 상부 전체(후면 삼각근, 능형근, 중부 승모근)의 분리도와 선명도를 높이는 것이 목표입니다. 의자를 낮춰 거의 서는 자세를 만들고, 팔꿈치를 90도로 높게 벌린 T자 형태를 유지하며 견갑골(날개뼈)을 강하게 쥐어짜주세요." }, progression: { base: 40, unit: "한쪽" } },
-        "pull_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "하이 로우", example: "예: 해머스트랭스 하이로우", cue: { primary: "광배 상부/대원근", tip: "등 상부 전체, 특히 승모근과 능형근의 볼륨감을 키웁니다. 윗가슴을 패드에 고정하고, 팔꿈치를 대각선 아래 & 뒤쪽으로 당기며 등 상부를 최대한 수축하세요." }, progression: { base: 35, unit: "한쪽" } },
-        "pull_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "로우 로우", example: "예: 해머스트랭스 로우로우", cue: { primary: "등 중앙/하부", tip: "등 상부 전체, 특히 승모근과 능형근의 종합적인 발달을 위한 운동입니다. 이 머신은 당기는 동작 후반부에 자연스러운 상승 궤적을 그립니다. 이 궤적을 따라 견갑골을 강하게 모으면서 자연스럽게 으쓱해준다는 느낌으로 끝까지 당겨주면, 등 중앙부는 물론 상부 승모근까지 완벽하게 자극할 수 있습니다." }, progression: { base: 40, unit: "한쪽" } },
-        "pull_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "후면 어깨", example: "예: 리어 델트 머신", cue: { primary: "후면 삼각근", tip: "가슴을 패드에 붙이고, 팔을 편 상태를 유지하며 어깨 뒤쪽 근육의 힘으로만 핸들을 벌려줍니다." }, progression: { base: 15, unit: "kg", increment: 5 } },
-        "pull_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "삼두 푸쉬다운", example: "예: 케이블 푸쉬 다운", cue: { primary: "삼두근", tip: "팔꿈치를 옆구리에 고정한 채, 삼두근 바깥쪽의 힘으로 바를 아래로 눌러줍니다. 상체 반동을 최소화하세요." }, progression: { base: 20, unit: "kg", increment: 5 } },
-
-        // --- PULL B ---
+        "pull_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "수평 당기기 (T바)", example: "예: 해머스트랭스 래터럴 로우 (T바)", cue: { primary: "승모/능형근/후면삼각근", tip: "등 상부 전체(후면 삼각근, 능형근, 중부 승모근)의 분리도와 선명도를 높이는 것이 목표입니다. 의자를 낮춰 거의 서는 자세를 만들고, 팔꿈치를 90도로 높게 벌린 T자 형태를 유지하며 견갑골(날개뼈)을 강하게 쥐어짜주세요." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 30, ADVANCED: 40 }, unit: "한쪽" } },
+        "pull_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "하이 로우", example: "예: 해머스트랭스 하이로우", cue: { primary: "광배 상부/대원근", tip: "등 상부 전체, 특히 승모근과 능형근의 볼륨감을 키웁니다. 윗가슴을 패드에 고정하고, 팔꿈치를 대각선 아래 & 뒤쪽으로 당기며 등 상부를 최대한 수축하세요." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 25, ADVANCED: 35 }, unit: "한쪽" } },
+        "pull_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "로우 로우", example: "예: 해머스트랭스 로우로우", cue: { primary: "등 중앙/하부", tip: "등 상부 전체, 특히 승모근과 능형근의 종합적인 발달을 위한 운동입니다. 이 머신은 당기는 동작 후반부에 자연스러운 상승 궤적을 그립니다. 이 궤적을 따라 견갑골을 강하게 모으면서 자연스럽게 으쓱해준다는 느낌으로 끝까지 당겨주면, 등 중앙부는 물론 상부 승모근까지 완벽하게 자극할 수 있습니다." }, progression: { base: { BEGINNER: 20, INTERMEDIATE: 30, ADVANCED: 40 }, unit: "한쪽" } },
+        "pull_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "후면 어깨", example: "예: 리어 델트 머신", cue: { primary: "후면 삼각근", tip: "가슴을 패드에 붙이고, 팔을 편 상태를 유지하며 어깨 뒤쪽 근육의 힘으로만 핸들을 벌려줍니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 10, ADVANCED: 15 }, unit: "kg", increment: 5 } },
+        "pull_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "삼두 푸쉬다운", example: "예: 케이블 푸쉬 다운", cue: { primary: "삼두근", tip: "팔꿈치를 옆구리에 고정한 채, 삼두근 바깥쪽의 힘으로 바를 아래로 눌러줍니다. 상체 반동을 최소화하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 15, ADVANCED: 20 }, unit: "kg", increment: 5 } },
+        
         "pull_b_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 노틸러스 풀오버", cue: { primary: "광배근", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
         "pull_b_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운 (가볍게)", cue: { primary: "견갑 하강", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
-        "pull_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "D.Y. 로우 (언더)", example: "예: 해머스트랭스 D.Y. 로우", cue: { primary: "광배 하부", tip: "언더그립으로 광배근 하부를 완벽하게 고립하여 타겟합니다. 안장을 낮춰 명치에 패드가 오게 하고, 팔꿈치를 옆구리에 붙여 배꼽 쪽으로 당기는 느낌에 집중하세요." }, progression: { base: 40, unit: "한쪽" } },
-        "pull_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "랫풀다운 (언더)", example: "예: 랫풀다운 (맥그립 언더)", cue: { primary: "광배 하부 (수직)", tip: "D.Y. 로우와 함께 광배근 하부를 다른 각도(수직)에서 공략합니다. 가슴을 열고 당겨주며, 최대 수축 지점에서 등을 쥐어짜세요." }, progression: { base: 65, unit: "총" } },
-        "pull_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "프론트 풀다운", example: "예: 해머스트랭스 프론트 풀다운", cue: { primary: "광배 전체", tip: "언더핸드 그립으로 핸들을 잡고 광배근 전체를 타겟합니다. 머신의 자연스러운 호(arc) 궤적을 따라 팔꿈치를 아래 및 뒤쪽으로 당겨, 등 중앙부까지 완전히 수축하는 느낌에 집중하세요." }, progression: { base: 40, unit: "한쪽" } },
-        "pull_b_04": { type: "SUB", sets: "3-4세트", reps: "10-12회", defaultName: "원 암 로우", example: "예: 해머스트랭스 원핸드 로우", cue: { primary: "등 전체 볼륨", tip: "등 전체의 '덩어리감'과 볼륨을 채워줍니다. 팔꿈치로 등 중앙을 깊게 찍는다는 느낌으로 당깁니다." }, progression: { base: 18, unit: "한쪽", increment: 2.5 } },
-        "pull_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "트라이셉스 익스텐션", example: "예: 라잉 트라이셉스 익스텐션", cue: { primary: "삼두 장두", tip: "삼두근의 가장 큰 부위(장두)를 타겟합니다. 팔꿈치를 고정한 채 이마나 정수리 쪽으로 바를 내립니다. EZ바 사용을 권장합니다." }, progression: { base: 15, unit: "kg", increment: 2.5 } },
+        "pull_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "D.Y. 로우 (언더)", example: "예: 해머스트랭스 D.Y. 로우", cue: { primary: "광배 하부", tip: "언더그립으로 광배근 하부를 완벽하게 고립하여 타겟합니다. 안장을 낮춰 명치에 패드가 오게 하고, 팔꿈치를 옆구리에 붙여 배꼽 쪽으로 당기는 느낌에 집중하세요." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 30, ADVANCED: 40 }, unit: "한쪽" } },
+        "pull_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "랫풀다운 (언더)", example: "예: 랫풀다운 (맥그립 언더)", cue: { primary: "광배 하부 (수직)", tip: "D.Y. 로우와 함께 광배근 하부를 다른 각도(수직)에서 공략합니다. 가슴을 열고 당겨주며, 최대 수축 지점에서 등을 쥐어짜세요." }, progression: { base: { BEGINNER: 30, INTERMEDIATE: 50, ADVANCED: 65 }, unit: "총" } },
+        "pull_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "프론트 풀다운", example: "예: 해머스트랭스 프론트 풀다운", cue: { primary: "광배 전체", tip: "언더핸드 그립으로 핸들을 잡고 광배근 전체를 타겟합니다. 머신의 자연스러운 호(arc) 궤적을 따라 팔꿈치를 아래 및 뒤쪽으로 당겨, 등 중앙부까지 완전히 수축하는 느낌에 집중하세요." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 30, ADVANCED: 40 }, unit: "한쪽" } },
+        "pull_b_04": { type: "SUB", sets: "3-4세트", reps: "10-12회", defaultName: "원 암 로우", example: "예: 해머스트랭스 원핸드 로우", cue: { primary: "등 전체 볼륨", tip: "등 전체의 '덩어리감'과 볼륨을 채워줍니다. 팔꿈치로 등 중앙을 깊게 찍는다는 느낌으로 당깁니다." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 14, ADVANCED: 18 }, unit: "한쪽", increment: 2.5 } },
+        "pull_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "트라이셉스 익스텐션", example: "예: 라잉 트라이셉스 익스텐션", cue: { primary: "삼두 장두", tip: "삼두근의 가장 큰 부위(장두)를 타겟합니다. 팔꿈치를 고정한 채 이마나 정수리 쪽으로 바를 내립니다. EZ바 사용을 권장합니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 10, ADVANCED: 15 }, unit: "kg", increment: 2.5 } },
 
-        // --- PULL C ---
         "pull_c_w1": { type: "WARMUP", sets: "2-3세트", reps: "12-15회", defaultName: "풀오버", example: "예: 덤벨 풀오버", cue: { primary: "광배근", tip: "광배근 스트레칭과 혈류 공급에 집중합니다." }, progression: { base: 0, unit: "text" } },
         "pull_c_w2": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "랫풀다운 (웜업)", example: "예: 랫풀다운", cue: { primary: "활성화", tip: "견갑을 아래로 누르는 움직임에 집중하여 등을 활성화시킵니다." }, progression: { base: 0, unit: "text" } },
-        "pull_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "랫풀다운 (패러럴)", example: "예: 랫풀다운 (맥그립 중간)", cue: { primary: "광배 전체/볼륨", tip: "광배근 전체의 볼륨과 매스를 키우는 올라운더 그립. 가슴을 열고 팔꿈치를 아래쪽 옆구리로 당긴다는 느낌으로 수행합니다." }, progression: { base: 65, unit: "총" } },
-        "pull_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "원 암 케이블 로우", example: "예: 시티드 케이블 로우 (원암)", cue: { primary: "광배근 고립", tip: "케이블의 지속적인 장력으로 광배근을 고립합니다. 당기면서 상체를 살짝 회전시켜 수축감을 극대화하고, 이완 시에는 최대한 늘려주세요." }, progression: { base: 40, unit: "총" } },
-        "pull_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "원 암 풀다운", example: "예: 해머 프론트 풀다운 (파나타 스타일)", cue: { primary: "광배 바깥쪽/이완", tip: "원 암 방식으로 견갑골을 최대로 움직여, 일반 풀다운으로는 불가능한 '최대 이완' 지점을 공략해 등 너비감을 만드는 운동입니다.<br>스트랩형 원핸드 그립 연결 후, 운동하는 쪽 어깨를 앞으로 최대한 밀어내 광배근 바깥쪽의 최대 이완 지점을 찾고, 그 지점에서부터 팔꿈치를 골반 쪽으로 당겨 등 하부까지 수축합니다." }, progression: { base: 30, unit: "한쪽" } },
+        "pull_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "랫풀다운 (패러럴)", example: "예: 랫풀다운 (맥그립 중간)", cue: { primary: "광배 전체/볼륨", tip: "광배근 전체의 볼륨과 매스를 키우는 올라운더 그립. 가슴을 열고 팔꿈치를 아래쪽 옆구리로 당긴다는 느낌으로 수행합니다." }, progression: { base: { BEGINNER: 30, INTERMEDIATE: 50, ADVANCED: 65 }, unit: "총" } },
+        "pull_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "원 암 케이블 로우", example: "예: 시티드 케이블 로우 (원암)", cue: { primary: "광배근 고립", tip: "케이블의 지속적인 장력으로 광배근을 고립합니다. 당기면서 상체를 살짝 회전시켜 수축감을 극대화하고, 이완 시에는 최대한 늘려주세요." }, progression: { base: { BEGINNER: 20, INTERMEDIATE: 30, ADVANCED: 40 }, unit: "총" } },
+        "pull_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "원 암 풀다운", example: "예: 해머 프론트 풀다운 (파나타 스타일)", cue: { primary: "광배 바깥쪽/이완", tip: "원 암 방식으로 견갑골을 최대로 움직여, 일반 풀다운으로는 불가능한 '최대 이완' 지점을 공략해 등 너비감을 만드는 운동입니다.<br>스트랩형 원핸드 그립 연결 후, 운동하는 쪽 어깨를 앞으로 최대한 밀어내 광배근 바깥쪽의 최대 이완 지점을 찾고, 그 지점에서부터 팔꿈치를 골반 쪽으로 당겨 등 하부까지 수축합니다." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 30 }, unit: "한쪽" } },
         "pull_c_04": { type: "SUB", sets: "3-4세트", reps: "15-20회", defaultName: "백 익스텐션", example: "예: 백 익스텐션", cue: { primary: "기립근/하부", tip: "허리 라인의 선명함과 깊이감을 만듭니다. 엉덩이와 등의 힘으로 상체를 들어올리고, 허리가 과하게 꺾이지 않도록 주의합니다." }, progression: { base: 0, unit: "맨몸", increment: 0 } },
         "pull_c_05": { type: "FINISH", sets: "2-3세트", reps: "8-10회", defaultName: "오버헤드 익스텐션", example: "예: 뉴텍 오버헤드 익스텐션", cue: { primary: "삼두 장두", tip: "시작 저항이 매우 강한 머신입니다. 처음에는 원판 없이 시작하여 자극에 적응하세요. 팔꿈치를 고정하고, 천천히 이완하며 삼두근 장두가 최대로 늘어나는 것을 느끼는 것이 핵심입니다." }, progression: { base: 0, unit: "kg", increment: 2.5 } },
 
-        // --- PUSH A ---
         "push_a_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우 (가볍게)", cue: { primary: "후면 활성화", tip: "가볍게 수평로우를 수행하여 견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
         "push_a_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
-        "push_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 프레스 (스미스)", example: "예: 로우 인클라인 스미스 프레스", cue: { primary: "윗가슴 (쇄골지)", tip: "벤치 각도를 낮게(약 15-20도) 설정하여 윗가슴 상부를 타겟합니다. 등을 패드에 단단히 고정하되, 견갑은 자연스럽게 움직이도록 허용하여 윗가슴의 최대 이완과 수축에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
-        "push_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 프레스 (머신)", example: "예: 해머스트랭스 인클라인 프레스", cue: { primary: "윗가슴", tip: "자연스러운 아크 궤적을 이용해 윗가슴에 새로운 자극을 줍니다. 등을 패드에 고정해 안정적인 기반을 만들고, 견갑의 자연스러운 움직임을 통해 윗가슴을 최대로 스트레칭하고 수축시키세요." }, progression: { base: 35, unit: "한쪽" } },
-        "push_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스", example: "예: 해머스트랭스 숄더 프레스", cue: { primary: "전면/측면 어깨", tip: "어깨의 전면과 측면을 타겟합니다. 등을 패드에 기대어 몸을 안정시키고, 자연스러운 어깨와 견갑의 리듬을 이용해 어깨 근육을 끝까지 수축하고 이완시키는 것에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
+        "push_a_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 프레스 (스미스)", example: "예: 로우 인클라인 스미스 프레스", cue: { primary: "윗가슴 (쇄골지)", tip: "벤치 각도를 낮게(약 15-20도) 설정하여 윗가슴 상부를 타겟합니다. 등을 패드에 단단히 고정하되, 견갑은 자연스럽게 움직이도록 허용하여 윗가슴의 최대 이완과 수축에 집중하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 30 }, unit: "한쪽" } },
+        "push_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 프레스 (머신)", example: "예: 해머스트랭스 인클라인 프레스", cue: { primary: "윗가슴", tip: "자연스러운 아크 궤적을 이용해 윗가슴에 새로운 자극을 줍니다. 등을 패드에 고정해 안정적인 기반을 만들고, 견갑의 자연스러운 움직임을 통해 윗가슴을 최대로 스트레칭하고 수축시키세요." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 25, ADVANCED: 35 }, unit: "한쪽" } },
+        "push_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스", example: "예: 해머스트랭스 숄더 프레스", cue: { primary: "전면/측면 어깨", tip: "어깨의 전면과 측면을 타겟합니다. 등을 패드에 기대어 몸을 안정시키고, 자연스러운 어깨와 견갑의 리듬을 이용해 어깨 근육을 끝까지 수축하고 이완시키는 것에 집중하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 30 }, unit: "한쪽" } },
         "push_a_04": { type: "SUB", sets: "3-4세트", reps: "실패지점까지", defaultName: "딥스", example: "예: 딥스 머신", cue: { primary: "아랫가슴/삼두", tip: "아랫가슴과 삼두근에 볼륨을 더합니다. 상체를 숙일수록 아랫가슴에 자극이 집중됩니다. 이완 시 견갑이 자연스럽게 상승하며 가슴이 최대로 늘어나는 것을 느끼세요." }, progression: { base: 0, unit: "맨몸", increment: 0 } },
-        "push_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "이두 컬", example: "예: 암 컬 머신 (투핸드)", cue: { primary: "이두근", tip: "팔을 패드에 완전히 고정하고, 반동 없이 이두근의 힘으로만 핸들을 들어올려 강하게 수축합니다." }, progression: { base: 15, unit: "kg", increment: 2.5 } },
+        "push_a_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "이두 컬", example: "예: 암 컬 머신 (투핸드)", cue: { primary: "이두근", tip: "팔을 패드에 완전히 고정하고, 반동 없이 이두근의 힘으로만 핸들을 들어올려 강하게 수축합니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 10, ADVANCED: 15 }, unit: "kg", increment: 2.5 } },
 
-        // --- PUSH B ---
         "push_b_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우", cue: { primary: "후면 활성화", tip: "가볍게 수평로우를 수행하여 견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
         "push_b_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
-        "push_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스", example: "예: 해머 시티드 체스트 프레스", cue: { primary: "가슴 중앙", tip: "가슴 중앙부의 볼륨감을 키우는 것이 목표입니다. 등을 패드에 완전히 고정하여 안정적인 기반을 만들되, 견갑의 자연스러운 움직임을 허용하여 가슴 근육의 최대 수축과 이완에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
-        "push_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "디클라인 프레스", example: "예: 너틸러스 프레스 (디클라인)", cue: { primary: "아랫가슴", tip: "아랫가슴 라인을 선명하게 만듭니다. 등을 패드에 단단히 고정하되, 견갑의 움직임을 허용하여 팔꿈치를 아래로 내릴 때 아랫가슴이 최대로 스트레칭되는 느낌에 집중하세요." }, progression: { base: 70, unit: "총" } },
-        "push_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (스미스)", example: "예: 스미스 숄더 프레스", cue: { primary: "전면 어깨", tip: "바가 턱 끝이나 쇄골까지 오도록 깊게 내립니다. 등을 벤치에 기대어 안정성을 확보하고, 견갑의 자연스러운 상방회전을 이용해 어깨 근육을 끝까지 쥐어짜는 느낌에 집중하세요." }, progression: { base: 30, unit: "한쪽" } },
-        "push_b_04": { type: "SUB", sets: "3-4세트", reps: "15-20회", defaultName: "케이블 크로스오버", example: "예: 케이블 크로스오버", cue: { primary: "가슴 안쪽", tip: "가슴 중앙부와 안쪽 라인을 만드는 것이 목표입니다.<br>1. 케이블 풀리를 가슴 중앙 높이에 맞추고 D-핸들을 잡습니다.<br>2. 몸을 앞으로 살짝 숙여 안정적인 자세를 잡습니다.<br>3. 팔꿈치를 살짝 구부린 상태로, 큰 원을 그리듯 가슴 중앙으로 모아주며 강하게 수축합니다." }, progression: { base: 10, unit: "kg", increment: 2.5 } },
-        "push_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "원 암 컬", example: "예: 암 컬 머신 (원핸드)", cue: { primary: "이두근", tip: "한 팔씩 수행하여 좌우 불균형을 교정하고 최고의 마인드-머슬 커넥션을 이끌어냅니다." }, progression: { base: 8, unit: "한쪽", increment: 2.5 } },
+        "push_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스", example: "예: 해머 시티드 체스트 프레스", cue: { primary: "가슴 중앙", tip: "가슴 중앙부의 볼륨감을 키우는 것이 목표입니다. 등을 패드에 완전히 고정하여 안정적인 기반을 만들되, 견갑의 자연스러운 움직임을 허용하여 가슴 근육의 최대 수축과 이완에 집중하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 30 }, unit: "한쪽" } },
+        "push_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "디클라인 프레스", example: "예: 너틸러스 프레스 (디클라인)", cue: { primary: "아랫가슴", tip: "아랫가슴 라인을 선명하게 만듭니다. 등을 패드에 단단히 고정하되, 견갑의 움직임을 허용하여 팔꿈치를 아래로 내릴 때 아랫가슴이 최대로 스트레칭되는 느낌에 집중하세요." }, progression: { base: { BEGINNER: 30, INTERMEDIATE: 50, ADVANCED: 70 }, unit: "총" } },
+        "push_b_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (스미스)", example: "예: 스미스 숄더 프레스", cue: { primary: "전면 어깨", tip: "바가 턱 끝이나 쇄골까지 오도록 깊게 내립니다. 등을 벤치에 기대어 안정성을 확보하고, 견갑의 자연스러운 상방회전을 이용해 어깨 근육을 끝까지 쥐어짜는 느낌에 집중하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 30 }, unit: "한쪽" } },
+        "push_b_04": { type: "SUB", sets: "3-4세트", reps: "15-20회", defaultName: "케이블 크로스오버", example: "예: 케이블 크로스오버", cue: { primary: "가슴 안쪽", tip: "가슴 중앙부와 안쪽 라인을 만드는 것이 목표입니다.<br>1. 케이블 풀리를 가슴 중앙 높이에 맞추고 D-핸들을 잡습니다.<br>2. 몸을 앞으로 살짝 숙여 안정적인 자세를 잡습니다.<br>3. 팔꿈치를 살짝 구부린 상태로, 큰 원을 그리듯 가슴 중앙으로 모아주며 강하게 수축합니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 7.5, ADVANCED: 10 }, unit: "kg", increment: 2.5 } },
+        "push_b_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "원 암 컬", example: "예: 암 컬 머신 (원핸드)", cue: { primary: "이두근", tip: "한 팔씩 수행하여 좌우 불균형을 교정하고 최고의 마인드-머슬 커넥션을 이끌어냅니다." }, progression: { base: { BEGINNER: 4, INTERMEDIATE: 6, ADVANCED: 8 }, unit: "한쪽", increment: 2.5 } },
 
-        // --- PUSH C ---
         "push_c_w1": { type: "WARMUP", sets: "4세트", reps: "10회", defaultName: "수평 당기기", example: "예: 해머 래터럴 로우", cue: { primary: "후면 활성화", tip: "가볍게 수평로우를 수행하여 견갑을 안정화시키고 후면을 활성화합니다. 가볍게 당기며 날개뼈 주변을 예열하세요." }, progression: { base: 0, unit: "text" } },
         "push_c_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
-        "push_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "덤벨 인클라인 (뉴트럴)", example: "예: 뉴트럴그립 덤벨 인클라인", cue: { primary: "윗가슴", tip: "벤치 각도를 30도로 설정합니다. 어깨 관절의 부담을 줄이면서 윗가슴 상부(쇄골지)를 집중적으로 공략하는 것이 핵심입니다. 등을 벤치에 단단히 고정하고, 팔꿈치를 과도하게 벌리지 말고 몸통에 가까운 궤적으로 움직이세요. 덤벨을 내릴 때 윗가슴이 최대로 늘어나는 것을 느끼고, 들어 올릴 때는 윗가슴을 강하게 쥐어짠다는 느낌에 집중하세요." }, progression: { base: 26, unit: "한쪽" } },
-        "push_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스 (뉴트럴)", example: "예: 너틸러스 체스트 (뉴트럴)", cue: { primary: "가슴 안쪽", tip: "V자 그립으로 가슴 중앙부를 강하게 수축시킵니다. 등을 패드에 기대 안정성을 확보하고, 프레스 동작 마지막에 견갑을 살짝 전인(내밀어)시켜 가슴 안쪽까지 완전히 쥐어짜주세요." }, progression: { base: 70, unit: "총" } },
-        "push_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (뉴트럴)", example: "예: 너틸러스 숄더 (뉴트럴)", cue: { primary: "전면/측면 어깨", tip: "정자세로 앉아 등받이에 등을 완전히 밀착합니다. 뉴트럴 그립을 잡고 어깨를 아래로 누른 상태를 유지하며, 머신 궤적을 따라 핸들을 위+안쪽으로 밀어 올립니다. 천천히 저항하며 시작 위치로 돌아옵니다." }, progression: { base: 35, unit: "총" } },
-        "push_c_04": { type: "SUB", sets: "3-4세트", reps: "10-15회", defaultName: "사이드 레터럴 레이즈", example: "예: 사레레 머신", cue: { primary: "측면 삼각근", tip: "어깨 측면(측면 삼각근)을 완벽하게 고립하여 어깨 프레임을 넓히는 것이 목표입니다. 팔꿈치로 패드를 들어올린다는 느낌으로 수행하고, 승모근이 으쓱하지 않도록 통제하는 것이 핵심입니다." }, progression: { base: 15, unit: "kg", increment: 2.5 } },
-        "push_c_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "인클라인 컬", example: "예: 인클라인 케이블 컬", cue: { primary: "이두 장두", tip: "벤치에 누워 이두근을 최대로 이완시킨 상태에서 시작하여, 이두근의 장두(긴 갈래)를 집중적으로 공략합니다. 지속적인 장력을 느끼는 것이 핵심입니다." }, progression: { base: 7, unit: "한쪽", increment: 2.5 } },
+        "push_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "덤벨 인클라인 (뉴트럴)", example: "예: 뉴트럴그립 덤벨 인클라인", cue: { primary: "윗가슴", tip: "벤치 각도를 30도로 설정합니다. 어깨 관절의 부담을 줄이면서 윗가슴 상부(쇄골지)를 집중적으로 공략하는 것이 핵심입니다. 등을 벤치에 단단히 고정하고, 팔꿈치를 과도하게 벌리지 말고 몸통에 가까운 궤적으로 움직이세요. 덤벨을 내릴 때 윗가슴이 최대로 늘어나는 것을 느끼고, 들어 올릴 때는 윗가슴을 강하게 쥐어짠다는 느낌에 집중하세요." }, progression: { base: { BEGINNER: 12, INTERMEDIATE: 20, ADVANCED: 26 }, unit: "한쪽" } },
+        "push_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스 (뉴트럴)", example: "예: 너틸러스 체스트 (뉴트럴)", cue: { primary: "가슴 안쪽", tip: "V자 그립으로 가슴 중앙부를 강하게 수축시킵니다. 등을 패드에 기대 안정성을 확보하고, 프레스 동작 마지막에 견갑을 살짝 전인(내밀어)시켜 가슴 안쪽까지 완전히 쥐어짜주세요." }, progression: { base: { BEGINNER: 30, INTERMEDIATE: 50, ADVANCED: 70 }, unit: "총" } },
+        "push_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (뉴트럴)", example: "예: 너틸러스 숄더 (뉴트럴)", cue: { primary: "전면/측면 어깨", tip: "정자세로 앉아 등받이에 등을 완전히 밀착합니다. 뉴트럴 그립을 잡고 어깨를 아래로 누른 상태를 유지하며, 머신 궤적을 따라 핸들을 위+안쪽으로 밀어 올립니다. 천천히 저항하며 시작 위치로 돌아옵니다." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 25, ADVANCED: 35 }, unit: "총" } },
+        "push_c_04": { type: "SUB", sets: "3-4세트", reps: "10-15회", defaultName: "사이드 레터럴 레이즈", example: "예: 사레레 머신", cue: { primary: "측면 삼각근", tip: "어깨 측면(측면 삼각근)을 완벽하게 고립하여 어깨 프레임을 넓히는 것이 목표입니다. 팔꿈치로 패드를 들어올린다는 느낌으로 수행하고, 승모근이 으쓱하지 않도록 통제하는 것이 핵심입니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 10, ADVANCED: 15 }, unit: "kg", increment: 2.5 } },
+        "push_c_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "인클라인 컬", example: "예: 인클라인 케이블 컬", cue: { primary: "이두 장두", tip: "벤치에 누워 이두근을 최대로 이완시킨 상태에서 시작하여, 이두근의 장두(긴 갈래)를 집중적으로 공략합니다. 지속적인 장력을 느끼는 것이 핵심입니다." }, progression: { base: { BEGINNER: 4, INTERMEDIATE: 6, ADVANCED: 7 }, unit: "한쪽", increment: 2.5 } },
         
-        // LEG A
         "leg_a_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 노틸러스 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_a_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 노틸러스 아웃 타이", cue: { primary: "중둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_a_w3": { type: "WARMUP", sets: "2세트", reps: "15회", defaultName: "레그 익스텐션 (웜업)", example: "예: 레그 익스텐션 (가볍게)", cue: { primary: "무릎 예열", tip: "무릎 관절을 예열하고 대퇴사두에 혈류를 보냅니다." }, progression: { base: 0, unit: "text" } },
-        "leg_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "스쿼트 (스미스)", example: "예: 스미스 머신 스쿼트", cue: { primary: "하체 전반", tip: "발을 어깨너비로 벌리고, 허리를 편 상태를 유지하며 깊게 앉습니다. 하체 전반의 힘을 사용하세요." }, progression: { base: 40, unit: "한쪽" } },
-        "leg_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스", example: "예: 레그 프레스 (기본)", cue: { primary: "대퇴사두/둔근", tip: "발을 발판 중앙, 어깨너비로 둡니다. 발뒤꿈치로 민다는 느낌으로 허벅지 전체에 균형잡힌 부하를 전달합니다." }, progression: { base: 120, unit: "총" } },
-        "leg_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션 (무겁게)", cue: { primary: "대퇴사두", tip: "다리를 완전히 폈을 때 1~2초간 멈춰 대퇴사두를 강하게 쥐어짭니다. 엉덩이가 뜨지 않도록 주의하세요." }, progression: { base: 25, unit: "kg", increment: 5 } },
-        "leg_a_05": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "뒤꿈치를 엉덩이 쪽으로 당길 때 햄스트링을 강하게 수축하고, 천천히 저항을 느끼면서 다리를 폅니다." }, progression: { base: 25, unit: "kg", increment: 5 } },
-        "leg_a_06": { type: "FINISH", sets: "3-4세트", reps: "15-20회", defaultName: "카프 레이즈", example: "예: 레그프레스 카프레이즈", cue: { primary: "종아리", tip: "발끝을 발판 아래쪽에 두고, 발뒤꿈치를 최대한 이완시켰다가 발끝으로 강하게 밀어 종아리를 수축합니다." }, progression: { base: 30, unit: "kg", increment: 5 } },
+        "leg_a_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "스쿼트 (스미스)", example: "예: 스미스 머신 스쿼트", cue: { primary: "하체 전반", tip: "발을 어깨너비로 벌리고, 허리를 편 상태를 유지하며 깊게 앉습니다. 하체 전반의 힘을 사용하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 25, ADVANCED: 40 }, unit: "한쪽" } },
+        "leg_a_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스", example: "예: 레그 프레스 (기본)", cue: { primary: "대퇴사두/둔근", tip: "발을 발판 중앙, 어깨너비로 둡니다. 발뒤꿈치로 민다는 느낌으로 허벅지 전체에 균형잡힌 부하를 전달합니다." }, progression: { base: { BEGINNER: 60, INTERMEDIATE: 90, ADVANCED: 120 }, unit: "총" } },
+        "leg_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션 (무겁게)", cue: { primary: "대퇴사두", tip: "다리를 완전히 폈을 때 1~2초간 멈춰 대퇴사두를 강하게 쥐어짭니다. 엉덩이가 뜨지 않도록 주의하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 15, ADVANCED: 25 }, unit: "kg", increment: 5 } },
+        "leg_a_05": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "뒤꿈치를 엉덩이 쪽으로 당길 때 햄스트링을 강하게 수축하고, 천천히 저항을 느끼면서 다리를 폅니다." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 15, ADVANCED: 25 }, unit: "kg", increment: 5 } },
+        "leg_a_06": { type: "FINISH", sets: "3-4세트", reps: "15-20회", defaultName: "카프 레이즈", example: "예: 레그프레스 카프레이즈", cue: { primary: "종아리", tip: "발끝을 발판 아래쪽에 두고, 발뒤꿈치를 최대한 이완시켰다가 발끝으로 강하게 밀어 종아리를 수축합니다." }, progression: { base: { BEGINNER: 20, INTERMEDIATE: 25, ADVANCED: 30 }, unit: "kg", increment: 5 } },
         
-        // LEG B
         "leg_b_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_b_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 아웃 타이", cue: { primary: "둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_b_w3": { type: "WARMUP", sets: "3세트", reps: "15-20회", defaultName: "익스텐션 (선피로)", example: "예: 레그 익스텐션", cue: { primary: "대퇴사두 선피로", tip: "가벼운 무게로 대퇴사두에 혈류를 집중시킵니다. 펌핑감을 느끼는 데 집중하세요." }, progression: { base: 0, unit: "text" } },
-        "leg_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스 (사두)", example: "예: 레그 프레스 (발 아래)", cue: { primary: "대퇴사두", tip: "발을 발판 아래쪽에 어깨너비보다 좁게 두어 대퇴사두에 자극을 집중시킵니다. 무릎 통증에 주의하며 가동범위를 조절하세요." }, progression: { base: 120, unit: "총" } },
-        "leg_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "핵스쿼트", example: "예: 싸이벡스 핵스쿼트", cue: { primary: "대퇴사두 고립", tip: "안정적인 궤적을 이용해 대퇴사두에 강한 고립감을 줍니다. 등을 패드에 완전히 고정하고 엉덩이가 뜨지 않게 하며, 허리가 둥글게 말리기 직전까지만 내려가세요." }, progression: { base: 40, unit: "총" } },
-        "leg_b_03": { type: "SUB", sets: "3세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션", cue: { primary: "대퇴사두 털기", tip: "무거운 무게로 대퇴사두를 완전히 털어냅니다. 최대 수축 지점에서 1~2초 멈춰주세요." }, progression: { base: 25, unit: "kg", increment: 5 } },
-        "leg_b_04": { type: "FINISH", sets: "3세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "균형을 위해 햄스트링을 가볍게 자극하며 마무리합니다. 네거티브 동작에 집중하세요." }, progression: { base: 25, unit: "kg", increment: 5 } },
+        "leg_b_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스 (사두)", example: "예: 레그 프레스 (발 아래)", cue: { primary: "대퇴사두", tip: "발을 발판 아래쪽에 어깨너비보다 좁게 두어 대퇴사두에 자극을 집중시킵니다. 무릎 통증에 주의하며 가동범위를 조절하세요." }, progression: { base: { BEGINNER: 60, INTERMEDIATE: 90, ADVANCED: 120 }, unit: "총" } },
+        "leg_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "핵스쿼트", example: "예: 싸이벡스 핵스쿼트", cue: { primary: "대퇴사두 고립", tip: "안정적인 궤적을 이용해 대퇴사두에 강한 고립감을 줍니다. 등을 패드에 완전히 고정하고 엉덩이가 뜨지 않게 하며, 허리가 둥글게 말리기 직전까지만 내려가세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 40 }, unit: "총" } },
+        "leg_b_03": { type: "SUB", sets: "3세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션", cue: { primary: "대퇴사두 털기", tip: "무거운 무게로 대퇴사두를 완전히 털어냅니다. 최대 수축 지점에서 1~2초 멈춰주세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 15, ADVANCED: 25 }, unit: "kg", increment: 5 } },
+        "leg_b_04": { type: "FINISH", sets: "3세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "균형을 위해 햄스트링을 가볍게 자극하며 마무리합니다. 네거티브 동작에 집중하세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 15, ADVANCED: 25 }, unit: "kg", increment: 5 } },
         
-        // LEG C
         "leg_c_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_c_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 아웃 타이", cue: { primary: "둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_c_w3": { type: "WARMUP", sets: "3세트", reps: "15-20회", defaultName: "레그 컬 (선피로)", example: "예: 레그 컬", cue: { primary: "햄스트링 선피로", tip: "가벼운 무게로 햄스트링에 먼저 자극을 줍니다. 펌핑감에 집중하세요." }, progression: { base: 0, unit: "text" } },
-        "leg_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스 (후면)", example: "예: 레그 프레스 (발 위)", cue: { primary: "햄스트링/둔근", tip: "발을 발판 위쪽에 넓게 두어 내전근을 포함한 후면 사슬 전체의 볼륨감에 집중합니다. 엉덩이가 패드에서 뜨지 않는 깊이까지만 내려가세요." }, progression: { base: 120, unit: "총" } },
-        "leg_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "리버스 V스쿼트", example: "예: V스쿼트 (리버스)", cue: { primary: "후면 사슬", tip: "머신을 마주보고 서서 어깨를 고리 모양의 패드에 견착합니다. 발을 어깨너비 또는 약간 좁게 두고, 엉덩이를 뒤로 깊게 빼며 앉아 햄스트링과 둔근의 최대 이완과 고립에 집중하세요. 발뒤꿈치로 강하게 밀어 올라오며 둔근을 수축합니다." }, progression: { base: 40, unit: "총" } },
-        "leg_c_03": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 컬 (보조)", example: "예: 레그 컬", cue: { primary: "햄스트링 볼륨", tip: "무거운 무게로 햄스트링 볼륨을 극대화합니다. 최대 수축 지점에서 1~2초 멈춰주세요." }, progression: { base: 25, unit: "kg", increment: 5 } },
-        "leg_c_04": { type: "FINISH", sets: "3-4세트", reps: "12-15회", defaultName: "힙 쓰러스트", example: "예: 머신 힙 쓰러스트", cue: { primary: "둔근", tip: "패드를 골반에 위치시키고, 발뒤꿈치로 강하게 밀어 엉덩이를 최대로 수축합니다. 정점에서 1~2초간 멈춰주세요." }, progression: { base: 30, unit: "kg", increment: 5 } }
+        "leg_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "레그 프레스 (후면)", example: "예: 레그 프레스 (발 위)", cue: { primary: "햄스트링/둔근", tip: "발을 발판 위쪽에 넓게 두어 내전근을 포함한 후면 사슬 전체의 볼륨감에 집중합니다. 엉덩이가 패드에서 뜨지 않는 깊이까지만 내려가세요." }, progression: { base: { BEGINNER: 60, INTERMEDIATE: 90, ADVANCED: 120 }, unit: "총" } },
+        "leg_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "리버스 V스쿼트", example: "예: V스쿼트 (리버스)", cue: { primary: "후면 사슬", tip: "머신을 마주보고 서서 어깨를 고리 모양의 패드에 견착합니다. 발을 어깨너비 또는 약간 좁게 두고, 엉덩이를 뒤로 깊게 빼며 앉아 햄스트링과 둔근의 최대 이완과 고립에 집중하세요. 발뒤꿈치로 강하게 밀어 올라오며 둔근을 수축합니다." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 40 }, unit: "총" } },
+        "leg_c_03": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 컬 (보조)", example: "예: 레그 컬", cue: { primary: "햄스트링 볼륨", tip: "무거운 무게로 햄스트링 볼륨을 극대화합니다. 최대 수축 지점에서 1~2초 멈춰주세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 15, ADVANCED: 25 }, unit: "kg", increment: 5 } },
+        "leg_c_04": { type: "FINISH", sets: "3-4세트", reps: "12-15회", defaultName: "힙 쓰러스트", example: "예: 머신 힙 쓰러스트", cue: { primary: "둔근", tip: "패드를 골반에 위치시키고, 발뒤꿈치로 강하게 밀어 엉덩이를 최대로 수축합니다. 정점에서 1~2초간 멈춰주세요." }, progression: { base: { BEGINNER: 10, INTERMEDIATE: 20, ADVANCED: 30 }, unit: "kg", increment: 5 } }
     };
 
-    // 🔥🔥 [수정] 레벨별 루틴 DB 분리 🔥🔥
     const ROUTINES_DB = {
-        // [초급] 웜업 + 핵심 복합관절 위주 (4-5종목)
         BEGINNER: {
             A: {
                 pull: ["pull_a_w1", "pull_a_01", "pull_a_02", "pull_a_05"],
@@ -330,7 +327,6 @@
                 leg: ["leg_c_w3", "leg_c_01", "leg_c_02", "leg_c_04"]
             }
         },
-        // [중급] 웜업 + 메인 + 필수 보조 (5-6종목)
         INTERMEDIATE: {
             A: {
                 pull: ["pull_a_w1", "pull_a_01", "pull_a_02", "pull_a_04", "pull_a_05"],
@@ -348,7 +344,6 @@
                 leg: ["leg_c_w1", "leg_c_w3", "leg_c_01", "leg_c_02", "leg_c_04"]
             }
         },
-        // [고급] 원본 전체 (7-8종목) - 디테일 고립/선피로 포함
         ADVANCED: {
             A: {
                 pull: ["pull_a_w1", "pull_a_w2", "pull_a_01", "pull_a_02", "pull_a_03", "pull_a_04", "pull_a_05"],
@@ -368,13 +363,10 @@
         }
     };
 
-    // ==========================================
-    // 2. STATE MANAGEMENT & WAKE LOCK & AUDIO
-    // ==========================================
-    const STORE_KEY = "v6_2_workout_data"; // Version Bump for new structure
+    const STORE_KEY = "v6_2_workout_data";
     let state = {
         week: 1, cycle: 1, day: 'pull',
-        level: 'ADVANCED', // [추가] Default Level
+        level: 'ADVANCED',
         customs: {},
         records: {},
         hideGuide: false
@@ -387,8 +379,6 @@
         if ('wakeLock' in navigator) {
             try {
                 wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Wake Lock active');
-                wakeLock.addEventListener('release', () => console.log('Wake Lock released'));
             } catch (err) { console.error(`${err.name}, ${err.message}`); }
         }
     }
@@ -428,7 +418,6 @@
     function loadData() {
         const saved = localStorage.getItem(STORE_KEY);
         if (saved) state = { ...state, ...JSON.parse(saved) };
-        // Legacy data migration: if level is missing, default to ADVANCED
         if (!state.level) state.level = 'ADVANCED';
     }
     function saveData() {
@@ -441,22 +430,25 @@
         }
     }
 
-    // 🔥🔥 [추가] 레벨 토글 함수 🔥🔥
-    function toggleLevel() {
-        const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
-        const currentIdx = levels.indexOf(state.level);
-        const nextIdx = (currentIdx + 1) % levels.length;
-        state.level = levels[nextIdx];
+    function setLevel(newLevel) {
+        state.level = newLevel;
         saveData();
-        render(); // Re-render to show filtered list
+        render(); 
     }
 
-    // ==========================================
-    // 3. CORE LOGIC
-    // ==========================================
     const round2_5 = n => Math.round(n / 2.5) * 2.5;
     const e1rm = (w, r) => r > 1 ? w * (1 + r / 30) : w;
     
+    function getBaseWeight(tplId) {
+        const tpl = TEMPLATES[tplId];
+        if (!tpl || !tpl.progression) return 0;
+        const base = tpl.progression.base;
+        if (typeof base === 'object') {
+            return base[state.level] || base.ADVANCED || 0;
+        }
+        return base;
+    }
+
     function isDumbbellExercise(tplId) {
         const tpl = TEMPLATES[tplId];
         if (!tpl) return false;
@@ -491,7 +483,6 @@
         return 90;
     }
 
-    // --- AEGIS LOGIC ---
     function calculateAegisGoal(tplId, history, custom, unitText) {
         const tpl = TEMPLATES[tplId];
         const currentWeek = state.week;
@@ -526,7 +517,8 @@
 
         const cycleHistory = sortedHistory.filter(r => r.cycle === currentCycle);
         const usableHistory = cycleHistory.filter(r => r.week < currentWeek);
-        const baseWeightFromTpl = tpl.progression.base || 0;
+        
+        const baseWeightFromTpl = getBaseWeight(tplId);
         const baseWeight = measurementBase || baseWeightFromTpl || 0;
         const lastRec = usableHistory.length > 0 ? usableHistory[usableHistory.length - 1] : null;
 
@@ -623,7 +615,7 @@
                 if (e > peak) peak = e;
             }));
             if (peak === 0) {
-                const startW = roundMain(tpl.progression.base || 0);
+                const startW = roundMain(getBaseWeight(tplId) || 0);
                 return `🔥 초기 측정: 10회 반복 가능한 무게 찾기 (권장: ${startW}${unitText})`;
             }
             if (phase === "축적 주기") {
@@ -671,9 +663,6 @@
         return calculateAegisGoal(tplId, validHistory, custom, unitText);
     }
 
-    // ==========================================
-    // 4. UI RENDERING
-    // ==========================================
     function renderWeekScroller() {
         const el = document.getElementById('week-scroller');
         if (el.children.length === 0) {
@@ -727,14 +716,16 @@
         document.getElementById('phase-badge').textContent = phase;
         document.getElementById('phase-badge').className = `px-2 py-0.5 rounded text-[10px] font-bold text-white backdrop-blur-sm shadow-sm ${phase.includes('강화') ? 'bg-red-500/80' : phase === '디로딩' ? 'bg-slate-500/80' : 'bg-green-500/80'}`;
         
-        // 🔥🔥 [수정] 레벨 배지 업데이트 🔥🔥
-        const levelBtn = document.getElementById('level-display');
-        levelBtn.textContent = `Lv. ${state.level}`;
-        // 레벨에 따른 색상 구분
-        if (state.level === 'BEGINNER') levelBtn.className = "text-[10px] font-bold text-white bg-green-500 px-2 py-0.5 rounded mt-0.5 hover:bg-green-600 transition shadow-sm";
-        else if (state.level === 'INTERMEDIATE') levelBtn.className = "text-[10px] font-bold text-white bg-blue-500 px-2 py-0.5 rounded mt-0.5 hover:bg-blue-600 transition shadow-sm";
-        else levelBtn.className = "text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded mt-0.5 hover:bg-slate-700 transition shadow-sm";
-
+        // 🔥 [변경] 세그먼트 버튼 스타일 업데이트
+        const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
+        levels.forEach(lvl => {
+            const btn = document.getElementById(`btn-lvl-${lvl}`);
+            if (state.level === lvl) {
+                btn.className = "flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all duration-200 text-center bg-white shadow-sm text-blue-600 ring-1 ring-black/5";
+            } else {
+                btn.className = "flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all duration-200 text-center text-slate-400 hover:text-slate-600";
+            }
+        });
 
         document.getElementById('routine-title').textContent = `${state.day.toUpperCase()} ${type}`;
         
@@ -763,8 +754,6 @@
         const listEl = document.getElementById('exercise-list');
         listEl.innerHTML = '';
         
-        // 🔥🔥 [수정] 레벨에 따른 루틴 리스트 로드 🔥🔥
-        // ROUTINES_DB에서 현재 레벨 -> 타입(A/B/C) -> 요일(pull/push/leg) 순으로 가져옴
         const routineList = ROUTINES_DB[state.level]?.[type]?.[state.day] || [];
         
         routineList.forEach((tplId, index) => {
