@@ -430,7 +430,34 @@
     // ==========================================
     const round2_5 = n => Math.round(n / 2.5) * 2.5;
     const e1rm = (w, r) => r > 1 ? w * (1 + r / 30) : w;
+    
+    // 덤벨(덤밸 포함) 운동인지 자동 판별
+    function isDumbbellExercise(tplId) {
+    const tpl = TEMPLATES[tplId];
+    if (!tpl) return false;
 
+    const custom = state.customs[tplId] || {};
+
+    // 템플릿 기본 이름 + 예시 + 커스텀 이름 모두 합쳐서 검색
+    const nameBundle = [
+        tpl.defaultName || "",
+        tpl.example || "",
+        custom.name || ""
+    ].join(" ").toLowerCase();
+
+    // 한글 오타까지 포함한 키워드
+    const dumbbellKeywords = [
+        "dumbbell",
+        "db",
+        "덤벨",
+        "덤밸",
+        "덤벨프레스",
+        "덤밸프레스"
+    ];
+
+    return dumbbellKeywords.some(kw => nameBundle.includes(kw));
+    }
+    
     function getPhaseInfo(week, cycle) {
         if (week === 13) return { phase: "디로딩", type: "A" };
         const isBlock = cycle % 2 !== 0;
@@ -643,119 +670,149 @@
 
     return `🔥 ${status}: ${nextWeight}${unitText} x ${targetReps} (${targetSets})`;
 }
-    function calculateGoal(tplId) {
-        const tpl = TEMPLATES[tplId];
-        const { phase } = getPhaseInfo(state.week, state.cycle);
-        const history = state.records[tplId] || [];
-        const custom = state.customs[tplId] || {};
-        const isLbs = custom.unit === 'lbs';
-        
-        const fmtW = (kgVal) => isLbs ? Math.round(kgVal * 2.20462) : kgVal;
-        const unitText = isLbs ? 'lbs' : 'kg';
+function calculateGoal(tplId) {
+    const tpl = TEMPLATES[tplId];
+    const { phase } = getPhaseInfo(state.week, state.cycle);
+    const history = state.records[tplId] || [];
+    const custom = state.customs[tplId] || {};
 
-        // ---- Filter history ----
-        const validHistory = history.filter(r => {
-            if (r.cycle < state.cycle) return true;
-            if (r.cycle === state.cycle && r.week < state.week) return true;
-            return false;
+    const isLbs = custom.unit === 'lbs';
+    const isDb = isDumbbellExercise(tplId);  // 🔍 덤벨 여부 체크
+
+    // kg / lbs + 덤벨 여부에 따른 공통 라운딩 함수
+    const roundMain = (raw) => {
+        if (isLbs) {
+            // lbs는 기존처럼 5lbs 단위
+            return Math.round(raw / 5) * 5;
+        }
+        // 덤벨이면 1kg 단위, 그 외에는 2.5kg 단위
+        return isDb ? Math.round(raw) : round2_5(raw);
+    };
+
+    const unitText = isLbs ? 'lbs' : 'kg';
+
+    // ---- 과거 기록(현재 주/사이클 이전 것만) 필터 ----
+    const validHistory = history.filter(r => {
+        if (r.cycle < state.cycle) return true;
+        if (r.cycle === state.cycle && r.week < state.week) return true;
+        return false;
+    });
+
+    const targetReps = tpl.reps || "12-15회";
+    const targetSets = tpl.sets || "3-4세트";
+
+    // 1) 웜업은 간단 로직
+    if (tpl.type === 'WARMUP') {
+        if (validHistory.length > 0) {
+            const sortedHistory = [...validHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const lastRec = sortedHistory[sortedHistory.length - 1];
+            if (lastRec && lastRec.sets.length > 0) {
+                const lastSet = lastRec.sets[lastRec.sets.length - 1];
+                if (lastSet.w) {
+                    return `🔥 목표: ${lastSet.w}${unitText} x ${targetReps} (${targetSets})`;
+                }
+            }
+        }
+        return `🔥 초기 설정: 몸이 잘 풀리는 적당한 무게 찾기`;
+    }
+
+    // 2) 텍스트 기반(진짜 중량 안 쓰는 템플릿)
+    if (tpl.progression.unit === 'text') {
+        return `${tpl.reps} (${tpl.sets})`;
+    }
+
+    // 3) 메인 운동 로직
+    if (tpl.type === 'MAIN') {
+        // 디로딩
+        if (phase === "디로딩") return "회복: 평소 워킹 중량의 50% (자세 집중)";
+
+        // 지금까지의 최고 e1RM 찾기
+        let peak = 0;
+        validHistory.forEach(rec => rec.sets.forEach(s => {
+            const e = e1rm(Number(s.w), Number(s.r));
+            if (e > peak) peak = e;
+        }));
+
+        // 아직 기록이 없으면: 초기 측정
+        if (peak === 0) {
+            const startW = roundMain(tpl.progression.base || 0);
+            return `🔥 초기 측정: 10회 반복 가능한 무게 찾기 (권장: ${startW}${unitText})`;
+        }
+
+        // ── 축적 주기 ──
+        if (phase === "축적 주기") {
+            let target = peak * 0.7;
+            target = roundMain(target);
+            return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트)`;
+        }
+
+        // ── 강화 주기 ──
+        // 직전 "강화 주기" 기록 중 가장 최근 1개
+        const lastStrength = validHistory
+            .filter(r => r.phase === "강화 주기")
+            .sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+
+        // 강화 주기지만 직전 강화 기록이 없다 → peak 기반 스타팅
+        if (!lastStrength) {
+            let startW = peak * 0.9;
+            startW = roundMain(startW);
+            return `🔥 강화 목표: 탑 세트 ${startW}${unitText} x AMRAP`;
+        }
+
+        // 직전 강화 기록에서 최고 e1RM 세트 찾기
+        let best = { w: 0, r: 0, e: 0 };
+        lastStrength.sets.forEach(s => {
+            const wNum = Number(s.w);
+            const rNum = Number(s.r);
+            const e = e1rm(wNum, rNum);
+            if (e > best.e) best = { w: wNum, r: rNum, e };
         });
 
-        const targetReps = tpl.reps || "12-15회";
-        const targetSets = tpl.sets || "3-4세트";
+        // 기본 승급/감량 멀티플라이어
+        let mult = 0.90;
+        const r = best.r;
 
-        if (tpl.type === 'WARMUP') {
-             if (validHistory.length > 0) {
-                 const sortedHistory = [...validHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
-                 const lastRec = sortedHistory[sortedHistory.length - 1];
-                 if (lastRec && lastRec.sets.length > 0) {
-                     const lastSet = lastRec.sets[lastRec.sets.length - 1];
-                     if (lastSet.w) {
-                         return `🔥 목표: ${lastSet.w}${unitText} x ${targetReps} (${targetSets})`;
-                     }
-                 }
-             }
-             return `🔥 초기 설정: 몸이 잘 풀리는 적당한 무게 찾기`; 
+        if (r >= 11)      mult = 1.05;
+        else if (r >= 8)  mult = 1.025;
+        else if (r >= 6)  mult = 1.0125;
+        else if (r === 5) mult = 1.0;
+        else if (r === 4) mult = 0.975;
+        else if (r === 3) mult = 0.95;
+
+        // 💡 덤벨인 경우: 승급 폭을 살짝 줄여서 더 보수적으로
+        if (isDb) {
+            // 너무 공격적인 증량은 캡
+            if (mult > 1.025) mult = 1.025;
+            // 너무 큰 감량도 방지 (3~4회밖에 안 나오는 상황)
+            if (mult < 0.95) mult = 0.95;
         }
 
-        if (tpl.progression.unit === 'text') {
-            return `${tpl.reps} (${tpl.sets})`;
+        const nextE1rm = best.e * mult;
+
+        // e1RM → 실제 탑세트 중량 (대략 80% 정도 목표)
+        let nextW = nextE1rm / 1.2;
+        nextW = roundMain(nextW);
+
+        // 증량인데 숫자가 안 변하면(라운딩 때문에) 최소 증량 강제
+        if (mult > 1.0 && nextW <= best.w) {
+            const minStep = isLbs ? 5 : (isDb ? 1 : 2.5);
+            nextW = roundMain(best.w + minStep);
         }
 
-        if (tpl.type === 'MAIN') {
-            if (phase === "디로딩") return "회복: 평소 워킹 중량의 50% (자세 집중)";
+        const backoff = roundMain(nextW * 0.8);
+        let f1 = roundMain(nextW * 0.5);
+        let f2 = roundMain(nextW * 0.75);
 
-            let peak = 0;
-            validHistory.forEach(rec => rec.sets.forEach(s => {
-                const e = e1rm(Number(s.w), Number(s.r));
-                if (e > peak) peak = e;
-            }));
-
-            if (peak === 0) {
-                const startW = fmtW(tpl.progression.base);
-                return `🔥 초기 측정: 10회 반복 가능한 무게 찾기 (권장: ${startW}${unitText})`;
-            }
-
-            if (phase === "축적 주기") {
-                let target = peak * 0.7;
-                if (isLbs) target = Math.round(target / 5) * 5;
-                else target = round2_5(target);
-                return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트)`;
-            }
-
-            const lastStrength = validHistory.filter(r => r.phase === "강화 주기").sort((a,b) => new Date(b.date) - new Date(a.date))[0];
-            if (!lastStrength) {
-                let startW = peak * 0.9;
-                if(isLbs) startW = Math.round(startW / 5) * 5;
-                else startW = round2_5(startW);
-                return `🔥 강화 목표: 탑 세트 ${startW}${unitText} x AMRAP`;
-            }
-
-            let best = { w: 0, r: 0, e: 0 };
-            lastStrength.sets.forEach(s => {
-                const e = e1rm(Number(s.w), Number(s.r));
-                if (e > best.e) best = { w: Number(s.w), r: Number(s.r), e };
-            });
-
-            let mult = 0.90;
-            const r = best.r;
-            if (r >= 11) mult = 1.05;
-            else if (r >= 8) mult = 1.025;
-            else if (r >= 6) mult = 1.0125;
-            else if (r === 5) mult = 1.0;
-            else if (r === 4) mult = 0.975;
-            else if (r === 3) mult = 0.95;
-
-            const nextE1rm = best.e * mult;
-            let nextW = nextE1rm / 1.2;
-            
-            if(isLbs) nextW = Math.round(nextW / 5) * 5; 
-            else nextW = round2_5(nextW);
-
-            if (mult > 1.0 && nextW <= best.w) nextW = best.w + (isLbs ? 5 : 2.5);
-
-            const backoff = isLbs ? Math.round(nextW * 0.8 / 5) * 5 : round2_5(nextW * 0.8);
-            
-            let f1 = nextW * 0.5;
-            let f2 = nextW * 0.75;
-            
-            if (isLbs) {
-                f1 = Math.round(f1 / 5) * 5;
-                f2 = Math.round(f2 / 5) * 5;
-            } else {
-                f1 = round2_5(f1);
-                f2 = round2_5(f2);
-            }
-
-            return `
+        return `
             <span class="block mb-1 text-blue-600">🔥 강화: 피더(${f1}${unitText}x5, ${f2}${unitText}x3)</span>
             <span class="block pl-4 text-red-600 font-bold mb-0.5 text-sm">↳ Top 1세트(${nextW}${unitText} x 최대)</span>
             <span class="block pl-4 text-red-600 font-bold text-sm">↳ Back-off 1세트(${backoff}${unitText} x 10)</span>
-            `;
-        }
-
-        // Sub/Finish Logic (Use Aegis)
-        return calculateAegisGoal(tplId, validHistory, custom, unitText);
+        `;
     }
+
+    // 4) 그 외(Sub / Finish) 보조운동은 AEGIS 로직 사용
+    return calculateAegisGoal(tplId, validHistory, custom, unitText);
+}
 
     // ==========================================
     // 4. UI RENDERING
@@ -1208,3 +1265,4 @@ function stopTimer() {
 </script>
 </body>
 </html>
+
