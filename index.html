@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.0</title>
+    <title>FF Growth Protocol v1.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -17,41 +17,25 @@
         #timer-banner.hide { transform: translateY(100%); }
         @keyframes flash { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; background-color: #dcfce7; } }
         .timer-finished { animation: flash 0.5s 4; }
-
-        @keyframes timerFlash {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.08);
-  }
-}
-
-.timer-flash {
-  animation: timerFlash 0.45s ease-in-out 4;
-}
-
-        /* iOS Safe Area Fixes */
+        @keyframes timerFlash { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+        .timer-flash { animation: timerFlash 0.45s ease-in-out 4; }
         body { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
         header { padding-top: env(safe-area-inset-top); }
         #timer-banner { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
-        
-        /* Prevent Input Zoom on iOS */
-        @media screen and (max-width: 640px) {
-            input, textarea, select { font-size: 16px !important; }
-        }
+        @media screen and (max-width: 640px) { input, textarea, select { font-size: 16px !important; } }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 select-none overflow-x-hidden">
 
     <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative bg-white sm:shadow-xl sm:my-4 sm:rounded-2xl overflow-hidden">
         
-        <!-- Header -->
         <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 sticky top-0 z-30">
             <div class="px-4 py-3 flex justify-between items-center">
                 <div>
-                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">FF Growth Protocol <span class="text-blue-600">v1.0</span></h1>
-                    <p class="text-[10px] text-slate-500 font-medium">26주 운동 플랜</p>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">FF Growth <span class="text-blue-600">v1.1</span></h1>
+                    <button onclick="toggleLevel()" id="level-display" class="text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded mt-0.5 hover:bg-slate-700 transition shadow-sm">
+                        Lv. ADVANCED
+                    </button>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="openGuide()" class="text-slate-400 border border-slate-200 p-1.5 rounded-full hover:bg-slate-50 hover:text-blue-500 transition">
@@ -61,18 +45,16 @@
                 </div>
             </div>
             
-            <!-- Week Scroller -->
             <div class="border-b border-slate-100 flex items-center bg-white">
-                <button onclick="changeWeek(-1)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10" aria-label="이전 주">
+                <button onclick="changeWeek(-1)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <div class="flex-grow overflow-x-auto flex gap-1 py-2 no-scrollbar scroll-smooth px-1" id="week-scroller"></div>
-                <button onclick="changeWeek(1)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10" aria-label="다음 주">
+                <button onclick="changeWeek(1)" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 transition-colors z-10">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
             </div>
 
-            <!-- Day Selector -->
             <div class="grid grid-cols-3 gap-1 p-2 bg-slate-50 mx-3 mt-3 mb-2 rounded-xl border border-slate-100">
                 <button onclick="setDay('pull')" id="btn-pull" class="day-btn py-2 text-sm font-bold rounded-lg transition-all">PULL</button>
                 <button onclick="setDay('push')" id="btn-push" class="day-btn py-2 text-sm font-bold rounded-lg transition-all">PUSH</button>
@@ -80,10 +62,8 @@
             </div>
         </header>
 
-        <!-- Main Content -->
         <main class="flex-grow p-3 sm:p-4 space-y-5 overflow-y-auto no-scrollbar" id="main-content">
             
-            <!-- Routine Info -->
             <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden transition-all duration-300">
                 <div class="absolute top-0 right-0 p-4 opacity-10">
                     <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor"><path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22 14.86 20.57 16.29 22 18.43 19.86 22 16.29z"/></svg>
@@ -106,12 +86,10 @@
                 </div>
             </div>
 
-            <!-- Exercises List -->
             <div id="exercise-list" class="space-y-4 pb-20"></div>
         </main>
     </div>
 
-    <!-- Timer Floating Banner -->
     <div id="timer-banner" class="fixed bottom-0 left-0 right-0 sm:max-w-md sm:mx-auto bg-slate-900 text-white p-4 z-50 rounded-t-2xl shadow-2xl hide">
         <div class="flex items-center justify-between">
             <div class="min-w-0 pr-4">
@@ -125,7 +103,6 @@
         </div>
     </div>
 
-    <!-- History Modal -->
     <div id="history-modal" class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center invisible opacity-0 transition-all duration-300">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeHistoryModal()"></div>
         <div class="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6 relative z-10 transform translate-y-full transition-transform duration-300 shadow-2xl flex flex-col max-h-[80vh]" id="history-panel">
@@ -139,7 +116,6 @@
         </div>
     </div>
 
-    <!-- Guide Modal -->
     <div id="guide-modal" class="fixed inset-0 z-[70] flex items-center justify-center invisible opacity-0 transition-all duration-300 p-4">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity" onclick="closeGuide()"></div>
         <div class="bg-white w-full max-w-md rounded-2xl p-6 relative z-10 shadow-2xl transform scale-95 transition-transform duration-300" id="guide-panel">
@@ -149,52 +125,63 @@
             </div>
             
             <div class="space-y-8 overflow-y-auto max-h-[65vh] pr-2 text-sm text-slate-700 leading-relaxed">
-                <!-- Strength Phase -->
+                
+                <div>
+                   <h4 class="font-bold text-lg text-slate-800 mb-2 flex items-center gap-2">
+                       <span class="bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded">NEW</span> 난이도 설정
+                   </h4>
+                   <p class="text-slate-600 mb-2">
+                       화면 좌측 상단의 <span class="font-bold bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px]">Lv.</span> 배지를 눌러 내 수준에 맞는 루틴을 선택하세요.
+                   </p>
+                   <ul class="list-disc list-inside mt-2 space-y-1 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                       <li><strong class="text-green-600">Beginner:</strong> 핵심 4~5종목 (짧고 굵게)</li>
+                       <li><strong class="text-blue-600">Intermediate:</strong> 표준 5~6종목 (균형 발달)</li>
+                       <li><strong class="text-slate-800">Advanced:</strong> 전체 7~8종목 (최대 볼륨)</li>
+                   </ul>
+                </div>
+
+                <hr class="border-slate-100">
+
                 <div>
                     <h4 class="font-bold text-lg text-red-700 mb-2">🚀 탑 세트 / 백오프 세트</h4>
                     <p class="mb-3 text-slate-600">
-                        <strong>'강화 주기'</strong>에 사용하는 방식으로, H.I.T.(고강도 훈련) 철학에 따라 실패 지점까지의 단 한 세트를 통해 최대의 근성장 자극을 이끌어내는 것을 목표로 합니다.
+                        <strong>'강화 주기'</strong>에 사용하는 방식으로, H.I.T. 철학에 따라 실패 지점까지의 단 한 세트를 통해 최대의 근성장 자극을 이끌어냅니다.
                     </p>
                     <div class="bg-red-50 p-4 rounded-xl">
                         <p class="font-semibold mb-2 text-red-800">수행 방법:</p>
                         <ol class="list-decimal list-inside space-y-3 text-slate-700">
                             <li>
                                 <strong>준비 세트 (Feeder Sets):</strong>
-                                <p class="pl-4 text-xs text-slate-500 mt-1">본 운동(탑 세트) 전, <strong>2~3세트에 걸쳐 무게를 점차 증량</strong>하며 예열합니다. 탑 세트 무게에 가까워질수록 <strong>반복 횟수는 3~5회로 낮게 유지</strong>하여 힘을 아끼세요. 절대 실패지점까지 수행하지 않습니다.</p>
+                                <p class="pl-4 text-xs text-slate-500 mt-1">본 운동 전, <strong>2~3세트에 걸쳐 무게를 점차 증량</strong>합니다. 탑 세트 무게에 가까워질수록 <strong>반복 횟수는 3~5회</strong>로 낮춰 힘을 아끼세요.</p>
                             </li>
                             <li>
                                 <strong>탑 세트 (Top Set):</strong>
-                                <p class="pl-4 text-xs text-slate-500 mt-1"><strong>오늘의 단 한 번뿐인 가장 중요한 세트</strong>입니다. 목표 중량으로 **실패 지점(Failure)까지 가능한 최대 횟수(AMRAP)**에 도전하세요. 이 기록이 다음 훈련의 무게를 결정합니다.</p>
+                                <p class="pl-4 text-xs text-slate-500 mt-1"><strong>오늘의 가장 중요한 세트</strong>입니다. 목표 중량으로 **실패 지점(Failure)**까지 수행하세요.</p>
                             </li>
                             <li>
                                 <strong>백오프 세트 (Back-off Set):</strong>
-                                <p class="pl-4 text-xs text-slate-500 mt-1">탑 세트 후, 중량을 <strong>약 20%</strong> 낮춥니다. <strong>1세트</strong>만 추가 수행하여 근성장에 필요한 볼륨을 채우고 마무리합니다.</p>
+                                <p class="pl-4 text-xs text-slate-500 mt-1">탑 세트 후, 중량을 <strong>약 20%</strong> 낮춰 <strong>1세트</strong> 더 수행하여 볼륨을 채웁니다.</p>
                             </li>
                         </ol>
                     </div>
                 </div>
-                <!-- Accumulation Phase -->
+
                 <div>
                     <h4 class="font-bold text-lg text-green-700 mb-2">💪 워킹 세트 (Working Sets)</h4>
                     <p class="mb-3 text-slate-600">
-                        <strong>'축적 주기'</strong>에 사용하는 방식으로, 근육의 크기(근비대)를 키우기 위해 충분한 운동량(볼륨)을 쌓는 데 집중하는 전통적인 훈련법입니다.
+                        <strong>'축적 주기'</strong>에 사용하는 방식으로, 근비대를 위해 충분한 운동량(볼륨)을 쌓는 전통적인 훈련법입니다.
                     </p>
                     <div class="bg-green-50 p-4 rounded-xl">
                         <p class="font-semibold mb-2 text-green-800">수행 방법:</p>
-                        <ol class="list-decimal list-inside space-y-3 text-slate-700">
-                            <li>
-                                <strong>목표 중량 설정:</strong>
-                                <p class="pl-4 text-xs text-slate-500 mt-1">앱이 제시하는 <strong>'🔥 축적 목표'</strong> 중량을 확인합니다. 이 무게가 오늘 수행할 모든 세트의 기준이 됩니다.</p>
-                            </li>
-                            <li>
-                                <strong>세트 반복 수행:</strong>
-                                <p class="pl-4 text-xs text-slate-500 mt-1">설정된 중량으로 <strong>목표 횟수(8~12회)를 3~4세트 반복</strong>합니다. 모든 세트에서 동일한 중량으로 목표 횟수를 채우는 것이 핵심입니다.</p>
-                            </li>
-                        </ol>
+                        <ul class="list-disc list-inside space-y-2 text-slate-700">
+                            <li>앱이 제시하는 <strong>'🔥 축적 목표'</strong> 무게로 고정합니다.</li>
+                            <li><strong>목표 횟수(8~12회)를 3~4세트</strong> 반복 수행합니다.</li>
+                            <li>모든 세트에서 동일한 중량을 유지하는 것이 목표입니다.</li>
+                        </ul>
                     </div>
                 </div>
-                <!-- Customization Info -->
-                <div class="pt-4 border-t border-slate-200">
+
+                <div class="pt-2">
                     <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-1">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         운동 설정 (커스터마이징)
@@ -212,7 +199,6 @@
         </div>
     </div>
 
-    <!-- Custom -->
     <div id="custom-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center invisible opacity-0 transition-all duration-300">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
         <div class="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6 relative z-10 transform translate-y-full transition-transform duration-300 shadow-2xl" id="modal-panel">
@@ -294,6 +280,7 @@
         "push_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (뉴트럴)", example: "예: 너틸러스 숄더 (뉴트럴)", cue: { primary: "전면/측면 어깨", tip: "정자세로 앉아 등받이에 등을 완전히 밀착합니다. 뉴트럴 그립을 잡고 어깨를 아래로 누른 상태를 유지하며, 머신 궤적을 따라 핸들을 위+안쪽으로 밀어 올립니다. 천천히 저항하며 시작 위치로 돌아옵니다." }, progression: { base: 35, unit: "총" } },
         "push_c_04": { type: "SUB", sets: "3-4세트", reps: "10-15회", defaultName: "사이드 레터럴 레이즈", example: "예: 사레레 머신", cue: { primary: "측면 삼각근", tip: "어깨 측면(측면 삼각근)을 완벽하게 고립하여 어깨 프레임을 넓히는 것이 목표입니다. 팔꿈치로 패드를 들어올린다는 느낌으로 수행하고, 승모근이 으쓱하지 않도록 통제하는 것이 핵심입니다." }, progression: { base: 15, unit: "kg", increment: 2.5 } },
         "push_c_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "인클라인 컬", example: "예: 인클라인 케이블 컬", cue: { primary: "이두 장두", tip: "벤치에 누워 이두근을 최대로 이완시킨 상태에서 시작하여, 이두근의 장두(긴 갈래)를 집중적으로 공략합니다. 지속적인 장력을 느끼는 것이 핵심입니다." }, progression: { base: 7, unit: "한쪽", increment: 2.5 } },
+        
         // LEG A
         "leg_a_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 노틸러스 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_a_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 노틸러스 아웃 타이", cue: { primary: "중둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
@@ -303,6 +290,7 @@
         "leg_a_04": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션 (무겁게)", cue: { primary: "대퇴사두", tip: "다리를 완전히 폈을 때 1~2초간 멈춰 대퇴사두를 강하게 쥐어짭니다. 엉덩이가 뜨지 않도록 주의하세요." }, progression: { base: 25, unit: "kg", increment: 5 } },
         "leg_a_05": { type: "SUB", sets: "3-4세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "뒤꿈치를 엉덩이 쪽으로 당길 때 햄스트링을 강하게 수축하고, 천천히 저항을 느끼면서 다리를 폅니다." }, progression: { base: 25, unit: "kg", increment: 5 } },
         "leg_a_06": { type: "FINISH", sets: "3-4세트", reps: "15-20회", defaultName: "카프 레이즈", example: "예: 레그프레스 카프레이즈", cue: { primary: "종아리", tip: "발끝을 발판 아래쪽에 두고, 발뒤꿈치를 최대한 이완시켰다가 발끝으로 강하게 밀어 종아리를 수축합니다." }, progression: { base: 30, unit: "kg", increment: 5 } },
+        
         // LEG B
         "leg_b_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_b_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 아웃 타이", cue: { primary: "둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
@@ -311,6 +299,7 @@
         "leg_b_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "핵스쿼트", example: "예: 싸이벡스 핵스쿼트", cue: { primary: "대퇴사두 고립", tip: "안정적인 궤적을 이용해 대퇴사두에 강한 고립감을 줍니다. 등을 패드에 완전히 고정하고 엉덩이가 뜨지 않게 하며, 허리가 둥글게 말리기 직전까지만 내려가세요." }, progression: { base: 40, unit: "총" } },
         "leg_b_03": { type: "SUB", sets: "3세트", reps: "12-15회", defaultName: "레그 익스텐션 (보조)", example: "예: 레그 익스텐션", cue: { primary: "대퇴사두 털기", tip: "무거운 무게로 대퇴사두를 완전히 털어냅니다. 최대 수축 지점에서 1~2초 멈춰주세요." }, progression: { base: 25, unit: "kg", increment: 5 } },
         "leg_b_04": { type: "FINISH", sets: "3세트", reps: "12-15회", defaultName: "레그 컬", example: "예: 레그 컬", cue: { primary: "햄스트링", tip: "균형을 위해 햄스트링을 가볍게 자극하며 마무리합니다. 네거티브 동작에 집중하세요." }, progression: { base: 25, unit: "kg", increment: 5 } },
+        
         // LEG C
         "leg_c_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
         "leg_c_w2": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "아웃 타이", example: "예: 아웃 타이", cue: { primary: "둔근", tip: "고관절 외전근(둔근)을 활성화합니다." }, progression: { base: 0, unit: "text" } },
@@ -321,32 +310,73 @@
         "leg_c_04": { type: "FINISH", sets: "3-4세트", reps: "12-15회", defaultName: "힙 쓰러스트", example: "예: 머신 힙 쓰러스트", cue: { primary: "둔근", tip: "패드를 골반에 위치시키고, 발뒤꿈치로 강하게 밀어 엉덩이를 최대로 수축합니다. 정점에서 1~2초간 멈춰주세요." }, progression: { base: 30, unit: "kg", increment: 5 } }
     };
 
-    const ROUTINES = {
-        A: {
-            pull: ["pull_a_w1", "pull_a_w2", "pull_a_01", "pull_a_02", "pull_a_03", "pull_a_04", "pull_a_05"],
-            push: ["push_a_w1", "push_a_w2", "push_a_01", "push_a_02", "push_a_03", "push_a_04", "push_a_05"],
-            leg: ["leg_a_w1", "leg_a_w2", "leg_a_w3", "leg_a_02", "leg_a_03", "leg_a_04", "leg_a_05", "leg_a_06"]
+    // 🔥🔥 [수정] 레벨별 루틴 DB 분리 🔥🔥
+    const ROUTINES_DB = {
+        // [초급] 웜업 + 핵심 복합관절 위주 (4-5종목)
+        BEGINNER: {
+            A: {
+                pull: ["pull_a_w1", "pull_a_01", "pull_a_02", "pull_a_05"],
+                push: ["push_a_w1", "push_a_01", "push_a_03", "push_a_05"],
+                leg: ["leg_a_w3", "leg_a_02", "leg_a_03", "leg_a_05"]
+            },
+            B: {
+                pull: ["pull_b_w1", "pull_b_01", "pull_b_02", "pull_b_05"],
+                push: ["push_b_w1", "push_b_01", "push_b_03", "push_b_05"],
+                leg: ["leg_b_w3", "leg_b_01", "leg_b_02", "leg_b_04"]
+            },
+            C: {
+                pull: ["pull_c_w1", "pull_c_01", "pull_c_03", "pull_c_05"],
+                push: ["push_c_w1", "push_c_01", "push_c_03", "push_c_05"],
+                leg: ["leg_c_w3", "leg_c_01", "leg_c_02", "leg_c_04"]
+            }
         },
-        B: {
-            pull: ["pull_b_w1", "pull_b_w2", "pull_b_01", "pull_b_02", "pull_b_03", "pull_b_04", "pull_b_05"],
-            push: ["push_b_w1", "push_b_w2", "push_b_01", "push_b_02", "push_b_03", "push_b_04", "push_b_05"],
-            leg: ["leg_b_w1", "leg_b_w2", "leg_b_w3", "leg_b_01", "leg_b_02", "leg_b_03", "leg_b_04"]
+        // [중급] 웜업 + 메인 + 필수 보조 (5-6종목)
+        INTERMEDIATE: {
+            A: {
+                pull: ["pull_a_w1", "pull_a_01", "pull_a_02", "pull_a_04", "pull_a_05"],
+                push: ["push_a_w1", "push_a_w2", "push_a_01", "push_a_03", "push_a_04", "push_a_05"],
+                leg: ["leg_a_w1", "leg_a_w3", "leg_a_02", "leg_a_03", "leg_a_05", "leg_a_06"]
+            },
+            B: {
+                pull: ["pull_b_w1", "pull_b_01", "pull_b_02", "pull_b_03", "pull_b_05"],
+                push: ["push_b_w1", "push_b_w2", "push_b_01", "push_b_03", "push_b_04", "push_b_05"],
+                leg: ["leg_b_w1", "leg_b_w3", "leg_b_01", "leg_b_02", "leg_b_04"]
+            },
+            C: {
+                pull: ["pull_c_w1", "pull_c_01", "pull_c_02", "pull_c_03", "pull_c_05"],
+                push: ["push_c_w1", "push_c_w2", "push_c_01", "push_c_03", "push_c_04", "push_c_05"],
+                leg: ["leg_c_w1", "leg_c_w3", "leg_c_01", "leg_c_02", "leg_c_04"]
+            }
         },
-        C: {
-            pull: ["pull_c_w1", "pull_c_w2", "pull_c_01", "pull_c_02", "pull_c_03", "pull_c_04", "pull_c_05"],
-            push: ["push_c_w1", "push_c_w2", "push_c_01", "push_c_02", "push_c_03", "push_c_04", "push_c_05"],
-            leg: ["leg_c_w1", "leg_c_w2", "leg_c_w3", "leg_c_01", "leg_c_02", "leg_c_03", "leg_c_04"]
+        // [고급] 원본 전체 (7-8종목) - 디테일 고립/선피로 포함
+        ADVANCED: {
+            A: {
+                pull: ["pull_a_w1", "pull_a_w2", "pull_a_01", "pull_a_02", "pull_a_03", "pull_a_04", "pull_a_05"],
+                push: ["push_a_w1", "push_a_w2", "push_a_01", "push_a_02", "push_a_03", "push_a_04", "push_a_05"],
+                leg: ["leg_a_w1", "leg_a_w2", "leg_a_w3", "leg_a_02", "leg_a_03", "leg_a_04", "leg_a_05", "leg_a_06"]
+            },
+            B: {
+                pull: ["pull_b_w1", "pull_b_w2", "pull_b_01", "pull_b_02", "pull_b_03", "pull_b_04", "pull_b_05"],
+                push: ["push_b_w1", "push_b_w2", "push_b_01", "push_b_02", "push_b_03", "push_b_04", "push_b_05"],
+                leg: ["leg_b_w1", "leg_b_w2", "leg_b_w3", "leg_b_01", "leg_b_02", "leg_b_03", "leg_b_04"]
+            },
+            C: {
+                pull: ["pull_c_w1", "pull_c_w2", "pull_c_01", "pull_c_02", "pull_c_03", "pull_c_04", "pull_c_05"],
+                push: ["push_c_w1", "push_c_w2", "push_c_01", "push_c_02", "push_c_03", "push_c_04", "push_c_05"],
+                leg: ["leg_c_w1", "leg_c_w2", "leg_c_w3", "leg_c_01", "leg_c_02", "leg_c_03", "leg_c_04"]
+            }
         }
     };
 
     // ==========================================
     // 2. STATE MANAGEMENT & WAKE LOCK & AUDIO
     // ==========================================
-    const STORE_KEY = "v6_1_workout_data"; // Updated version key
+    const STORE_KEY = "v6_2_workout_data"; // Version Bump for new structure
     let state = {
         week: 1, cycle: 1, day: 'pull',
-        customs: {}, // { tplId: { name, note, unit: 'kg'|'lbs' } }
-        records: {},  // { tplId: [ { date, week, cycle, phase, sets: [{w, r}] } ] }
+        level: 'ADVANCED', // [추가] Default Level
+        customs: {},
+        records: {},
         hideGuide: false
     };
 
@@ -358,23 +388,14 @@
             try {
                 wakeLock = await navigator.wakeLock.request('screen');
                 console.log('Wake Lock active');
-                wakeLock.addEventListener('release', () => {
-                    console.log('Wake Lock released');
-                });
-            } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
-            }
+                wakeLock.addEventListener('release', () => console.log('Wake Lock released'));
+            } catch (err) { console.error(`${err.name}, ${err.message}`); }
         }
     }
 
-    // Audio Context Setup
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     function playBeep() {
@@ -383,24 +404,18 @@
         const gainNode = audioCtx.createGain();
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        
         oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
         gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        
         oscillator.start();
         gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
         oscillator.stop(audioCtx.currentTime + 0.5);
     }
 
-    // Re-acquire lock on visibility change
     document.addEventListener('visibilitychange', async () => {
-        if (wakeLock !== null && document.visibilityState === 'visible') {
-            await acquireWakeLock();
-        }
+        if (wakeLock !== null && document.visibilityState === 'visible') await acquireWakeLock();
     });
 
-    // Init features on first interaction
     function initFeatures() {
         initAudio();
         acquireWakeLock();
@@ -410,10 +425,11 @@
     document.addEventListener('click', initFeatures);
     document.addEventListener('touchstart', initFeatures);
 
-
     function loadData() {
         const saved = localStorage.getItem(STORE_KEY);
         if (saved) state = { ...state, ...JSON.parse(saved) };
+        // Legacy data migration: if level is missing, default to ADVANCED
+        if (!state.level) state.level = 'ADVANCED';
     }
     function saveData() {
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
@@ -425,37 +441,29 @@
         }
     }
 
+    // 🔥🔥 [추가] 레벨 토글 함수 🔥🔥
+    function toggleLevel() {
+        const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
+        const currentIdx = levels.indexOf(state.level);
+        const nextIdx = (currentIdx + 1) % levels.length;
+        state.level = levels[nextIdx];
+        saveData();
+        render(); // Re-render to show filtered list
+    }
+
     // ==========================================
     // 3. CORE LOGIC
     // ==========================================
     const round2_5 = n => Math.round(n / 2.5) * 2.5;
     const e1rm = (w, r) => r > 1 ? w * (1 + r / 30) : w;
     
-    // 덤벨(덤밸 포함) 운동인지 자동 판별
     function isDumbbellExercise(tplId) {
-    const tpl = TEMPLATES[tplId];
-    if (!tpl) return false;
-
-    const custom = state.customs[tplId] || {};
-
-    // 템플릿 기본 이름 + 예시 + 커스텀 이름 모두 합쳐서 검색
-    const nameBundle = [
-        tpl.defaultName || "",
-        tpl.example || "",
-        custom.name || ""
-    ].join(" ").toLowerCase();
-
-    // 한글 오타까지 포함한 키워드
-    const dumbbellKeywords = [
-        "dumbbell",
-        "db",
-        "덤벨",
-        "덤밸",
-        "덤벨프레스",
-        "덤밸프레스"
-    ];
-
-    return dumbbellKeywords.some(kw => nameBundle.includes(kw));
+        const tpl = TEMPLATES[tplId];
+        if (!tpl) return false;
+        const custom = state.customs[tplId] || {};
+        const nameBundle = [tpl.defaultName || "", tpl.example || "", custom.name || ""].join(" ").toLowerCase();
+        const dumbbellKeywords = ["dumbbell", "db", "덤벨", "덤밸", "덤벨프레스", "덤밸프레스"];
+        return dumbbellKeywords.some(kw => nameBundle.includes(kw));
     }
     
     function getPhaseInfo(week, cycle) {
@@ -472,382 +480,221 @@
         return { phase, type };
     }
 
-    // Determine Rest Time based on Exercise Type & Phase
     function getRestTime(tplId, phase) {
         const tpl = TEMPLATES[tplId];
-        if (!tpl) return 90; // default
-
-        // Warmup -> 60s
+        if (!tpl) return 90;
         if (tpl.type === 'WARMUP') return 60;
-
-        // Main Exercise
         if (tpl.type === 'MAIN') {
-            // Strength Phase -> 150s (2m 30s)
             if (phase === '강화 주기') return 150;
-            // Accumulation Phase -> 90s (1m 30s)
             return 90; 
         }
-
-        // Accessory / Finisher -> 90s
         return 90;
     }
 
-// --- AEGIS LOGIC (REPLAY HISTORY) ---
+    // --- AEGIS LOGIC ---
     function calculateAegisGoal(tplId, history, custom, unitText) {
         const tpl = TEMPLATES[tplId];
         const currentWeek = state.week;
         const currentCycle = state.cycle;
-
-    // 🔥 증·감량 공통 단위: 2.5kg 고정
         const DEC_STEP_KG = 2.5;
         const INC_STEP_KG = 2.5;
-
         const targetReps = tpl.reps || "12-15회";
         const targetSets = tpl.sets || "3-4세트";
-
-    // 반복 / 세트 파싱
         const repMatch = targetReps.match(/(\d+)/);
         const minReps = repMatch ? parseInt(repMatch[1], 10) : 12;
         const maxRepsMatch = targetReps.match(/-(\d+)/);
         const maxReps = maxRepsMatch ? parseInt(maxRepsMatch[1], 10) : minReps;
-
         const setMatch = targetSets.match(/(\d+)/);
         const minSets = setMatch ? parseInt(setMatch[1], 10) : 3;
-
-    // 히스토리 정렬 (오래된 순)
-        const sortedHistory = [...history].sort(
-        (a, b) => new Date(a.date) - new Date(b.date)
-    );
-
-    // ----------------------------------
-    // ① C1 1~3주차: 15RM 측정용 기록만 모으기
-    // ----------------------------------
-        const measurementRecs = sortedHistory.filter(
-        (r) => r.cycle === 1 && r.week >= 1 && r.week <= 3
-    );
-
-        let measurementBase = 0; // 15RM 기준 중량
-
-    measurementRecs.forEach((rec) => {
-        rec.sets.forEach((s) => {
-            const w = Number(s.w) || 0;
-            const r = Number(s.r) || 0;
-            if (!w || !r) return;
-
-            // 최소 reps 이상인 세트 중 가장 무거운 중량을 15RM 기준으로 사용
-            if (r >= minReps && w > measurementBase) {
-                measurementBase = w;
-            }
-        });
-    });
-
-    // ----------------------------------
-    // ② C1 1~3주차 화면일 때: 측정/보정 모드
-    //    → 여기서는 증감 로직 안 타고 안내 텍스트만
-    // ----------------------------------
-    if (currentCycle === 1 && currentWeek <= 3) {
-        if (measurementBase === 0) {
-            // 아직 측정값 없음
-            return `🔥 15RM 측정 주간: ${maxReps}회까지 가능한 최대 무게를 찾고 기록하세요`;
-        } else {
-            // 어느 정도 기준이 생긴 상태 → 보정 느낌
-            return `🔥 15RM 보정 주간: 현재 기준 ${measurementBase}${unitText}에서 ${maxReps}회 달성 여부 확인`;
-        }
-    }
-
-    // ----------------------------------
-    // ③ 4주차 이후 / 다른 사이클: 증감 로직
-    // ----------------------------------
-
-    // 현재 사이클(Cn) 히스토리
-    const cycleHistory = sortedHistory.filter(
-        (r) => r.cycle === currentCycle
-    );
-
-    // 현재 주 이전 기록만 사용 (이번 주는 제외)
-    const usableHistory = cycleHistory.filter(
-        (r) => r.week < currentWeek
-    );
-
-    const baseWeightFromTpl = tpl.progression.base || 0;
-    const baseWeight = measurementBase || baseWeightFromTpl || 0;
-
-    // 직전 기록 (같은 사이클에서 마지막 기록)
-    const lastRec =
-        usableHistory.length > 0
-            ? usableHistory[usableHistory.length - 1]
-            : null;
-
-    // 아직 이 사이클에서 보조운동 기록이 없음 → 시작 기준 안내
-    if (!lastRec || !lastRec.sets || lastRec.sets.length === 0) {
-        if (measurementBase > 0) {
-            // 1~3주차 15RM 기록이 있으면 그걸 기준으로 시작
-            return `🔥 시작 기준: ${measurementBase}${unitText} x ${targetReps} (${targetSets})`;
-        }
-        if (baseWeightFromTpl > 0) {
-            // 템플릿 기본값이라도 있으면 그걸 사용
-            return `🔥 시작 기준: ${baseWeightFromTpl}${unitText} x ${targetReps} (${targetSets})`;
-        }
-        // 아무 정보도 없을 때
-        return `🔥 기준 설정: ${maxReps}회 가능한 무게를 먼저 찾으세요`;
-    }
-
-    // 직전 세션에서 쓴 기준 중량 (첫 세트 기준)
-    let lastAttemptWeight = Number(lastRec.sets[0].w);
-    if (isNaN(lastAttemptWeight) || lastAttemptWeight === 0) {
-        lastAttemptWeight = baseWeight;
-    }
-
-    // ----------------------------------
-    // ④ 감량 로직
-    //    - 기준중량 이상 + 최소 reps 이상 세트가 3세트 미만이면 감량
-    // ----------------------------------
-    {
-        const requiredLowLevelSets = 3;
-        let okSets = 0;
-
-        lastRec.sets.forEach((s) => {
-            const w = Number(s.w) || 0;
-            const r = Number(s.r) || 0;
-
-            if (w >= baseWeight && r >= minReps) {
-                okSets++;
-            }
+        const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        const measurementRecs = sortedHistory.filter(r => r.cycle === 1 && r.week >= 1 && r.week <= 3);
+        let measurementBase = 0;
+        measurementRecs.forEach((rec) => {
+            rec.sets.forEach((s) => {
+                const w = Number(s.w) || 0;
+                const r = Number(s.r) || 0;
+                if (!w || !r) return;
+                if (r >= minReps && w > measurementBase) measurementBase = w;
+            });
         });
 
-        if (okSets < requiredLowLevelSets) {
-            // 🔥 감량 단위 2.5kg → lbs는 5lbs 단위로 근사
-            let decKg = DEC_STEP_KG;
-            let dec = decKg;
+        if (currentCycle === 1 && currentWeek <= 3) {
+            if (measurementBase === 0) return `🔥 15RM 측정 주간: ${maxReps}회까지 가능한 최대 무게를 찾고 기록하세요`;
+            else return `🔥 15RM 보정 주간: 현재 기준 ${measurementBase}${unitText}에서 ${maxReps}회 달성 여부 확인`;
+        }
 
-            if (custom.unit === "lbs") {
-                dec = Math.round(decKg * 2.2 / 5) * 5; // 2.5kg ≒ 5lbs
+        const cycleHistory = sortedHistory.filter(r => r.cycle === currentCycle);
+        const usableHistory = cycleHistory.filter(r => r.week < currentWeek);
+        const baseWeightFromTpl = tpl.progression.base || 0;
+        const baseWeight = measurementBase || baseWeightFromTpl || 0;
+        const lastRec = usableHistory.length > 0 ? usableHistory[usableHistory.length - 1] : null;
+
+        if (!lastRec || !lastRec.sets || lastRec.sets.length === 0) {
+            if (measurementBase > 0) return `🔥 시작 기준: ${measurementBase}${unitText} x ${targetReps} (${targetSets})`;
+            if (baseWeightFromTpl > 0) return `🔥 시작 기준: ${baseWeightFromTpl}${unitText} x ${targetReps} (${targetSets})`;
+            return `🔥 기준 설정: ${maxReps}회 가능한 무게를 먼저 찾으세요`;
+        }
+
+        let lastAttemptWeight = Number(lastRec.sets[0].w);
+        if (isNaN(lastAttemptWeight) || lastAttemptWeight === 0) lastAttemptWeight = baseWeight;
+
+        {
+            const requiredLowLevelSets = 3;
+            let okSets = 0;
+            lastRec.sets.forEach((s) => {
+                const w = Number(s.w) || 0;
+                const r = Number(s.r) || 0;
+                if (w >= baseWeight && r >= minReps) okSets++;
+            });
+            if (okSets < requiredLowLevelSets) {
+                let decKg = DEC_STEP_KG;
+                let dec = decKg;
+                if (custom.unit === "lbs") dec = Math.round(decKg * 2.2 / 5) * 5;
+                const reducedWeight = Math.max(0, lastAttemptWeight - dec);
+                return `🔥 감량 권장: ${reducedWeight}${unitText} x ${targetReps} (${targetSets})`;
             }
-
-            const reducedWeight = Math.max(0, lastAttemptWeight - dec);
-
-            return `🔥 감량 권장: ${reducedWeight}${unitText} x ${targetReps} (${targetSets})`;
-        }
-    }
-
-    // ----------------------------------
-    // ⑤ 증량 / 유지 로직
-    //    - 4세트 모두 상한 reps(예: 15회) + 동일 중량이면 증량
-    // ----------------------------------
-    const requiredSets = 4;
-    let success = false;
-
-    if (lastRec.sets.length >= requiredSets) {
-        success = true;
-
-        for (let i = 0; i < requiredSets; i++) {
-            const s = lastRec.sets[i];
-            const reps = Number(s.r) || 0;
-            const weight = Number(s.w) || 0;
-
-            if (reps < maxReps || weight < lastAttemptWeight) {
-                success = false;
-                break;
-            }
-        }
-    }
-
-    let nextWeight = lastAttemptWeight;
-    let status = "유지";
-
-    if (success) {
-        // 🔥 증량 단위 2.5kg → lbs는 5lbs 단위로 근사
-        let incKg = INC_STEP_KG;
-        let inc = incKg;
-
-        if (custom.unit === "lbs") {
-            inc = Math.round(incKg * 2.2 / 5) * 5;
         }
 
-        nextWeight += inc;
-        status = "증량 도전";
-    }
-
-    return `🔥 ${status}: ${nextWeight}${unitText} x ${targetReps} (${targetSets})`;
-}
-function calculateGoal(tplId) {
-    const tpl = TEMPLATES[tplId];
-    const { phase } = getPhaseInfo(state.week, state.cycle);
-    const history = state.records[tplId] || [];
-    const custom = state.customs[tplId] || {};
-
-    const isLbs = custom.unit === 'lbs';
-    const isDb = isDumbbellExercise(tplId);  // 🔍 덤벨 여부 체크
-
-    // kg / lbs + 덤벨 여부에 따른 공통 라운딩 함수
-    const roundMain = (raw) => {
-        if (isLbs) {
-            // lbs는 기존처럼 5lbs 단위
-            return Math.round(raw / 5) * 5;
-        }
-        // 덤벨이면 1kg 단위, 그 외에는 2.5kg 단위
-        return isDb ? Math.round(raw) : round2_5(raw);
-    };
-
-    const unitText = isLbs ? 'lbs' : 'kg';
-
-    // ---- 과거 기록(현재 주/사이클 이전 것만) 필터 ----
-    const validHistory = history.filter(r => {
-        if (r.cycle < state.cycle) return true;
-        if (r.cycle === state.cycle && r.week < state.week) return true;
-        return false;
-    });
-
-    const targetReps = tpl.reps || "12-15회";
-    const targetSets = tpl.sets || "3-4세트";
-
-    // 1) 웜업은 간단 로직
-    if (tpl.type === 'WARMUP') {
-        if (validHistory.length > 0) {
-            const sortedHistory = [...validHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
-            const lastRec = sortedHistory[sortedHistory.length - 1];
-            if (lastRec && lastRec.sets.length > 0) {
-                const lastSet = lastRec.sets[lastRec.sets.length - 1];
-                if (lastSet.w) {
-                    return `🔥 목표: ${lastSet.w}${unitText} x ${targetReps} (${targetSets})`;
+        const requiredSets = 4;
+        let success = false;
+        if (lastRec.sets.length >= requiredSets) {
+            success = true;
+            for (let i = 0; i < requiredSets; i++) {
+                const s = lastRec.sets[i];
+                const reps = Number(s.r) || 0;
+                const weight = Number(s.w) || 0;
+                if (reps < maxReps || weight < lastAttemptWeight) {
+                    success = false;
+                    break;
                 }
             }
         }
-        return `🔥 초기 설정: 몸이 잘 풀리는 적당한 무게 찾기`;
+
+        let nextWeight = lastAttemptWeight;
+        let status = "유지";
+        if (success) {
+            let incKg = INC_STEP_KG;
+            let inc = incKg;
+            if (custom.unit === "lbs") inc = Math.round(incKg * 2.2 / 5) * 5;
+            nextWeight += inc;
+            status = "증량 도전";
+        }
+        return `🔥 ${status}: ${nextWeight}${unitText} x ${targetReps} (${targetSets})`;
     }
 
-    // 2) 텍스트 기반(진짜 중량 안 쓰는 템플릿)
-    if (tpl.progression.unit === 'text') {
-        return `${tpl.reps} (${tpl.sets})`;
-    }
-
-    // 3) 메인 운동 로직
-    if (tpl.type === 'MAIN') {
-        // 디로딩
-        if (phase === "디로딩") return "회복: 평소 워킹 중량의 50% (자세 집중)";
-
-        // 지금까지의 최고 e1RM 찾기
-        let peak = 0;
-        validHistory.forEach(rec => rec.sets.forEach(s => {
-            const e = e1rm(Number(s.w), Number(s.r));
-            if (e > peak) peak = e;
-        }));
-
-        // 아직 기록이 없으면: 초기 측정
-        if (peak === 0) {
-            const startW = roundMain(tpl.progression.base || 0);
-            return `🔥 초기 측정: 10회 반복 가능한 무게 찾기 (권장: ${startW}${unitText})`;
-        }
-
-        // ── 축적 주기 ──
-        if (phase === "축적 주기") {
-            let target = peak * 0.7;
-            target = roundMain(target);
-            return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트)`;
-        }
-
-        // ── 강화 주기 ──
-        // 직전 "강화 주기" 기록 중 가장 최근 1개
-        const lastStrength = validHistory
-            .filter(r => r.phase === "강화 주기")
-            .sort((a,b) => new Date(b.date) - new Date(a.date))[0];
-
-        // 강화 주기지만 직전 강화 기록이 없다 → peak 기반 스타팅
-        if (!lastStrength) {
-            let startW = peak * 0.9;
-            startW = roundMain(startW);
-            return `🔥 강화 목표: 탑 세트 ${startW}${unitText} x AMRAP`;
-        }
-
-        // 직전 강화 기록에서 최고 e1RM 세트 찾기
-        let best = { w: 0, r: 0, e: 0 };
-        lastStrength.sets.forEach(s => {
-            const wNum = Number(s.w);
-            const rNum = Number(s.r);
-            const e = e1rm(wNum, rNum);
-            if (e > best.e) best = { w: wNum, r: rNum, e };
+    function calculateGoal(tplId) {
+        const tpl = TEMPLATES[tplId];
+        const { phase } = getPhaseInfo(state.week, state.cycle);
+        const history = state.records[tplId] || [];
+        const custom = state.customs[tplId] || {};
+        const isLbs = custom.unit === 'lbs';
+        const isDb = isDumbbellExercise(tplId);
+        const roundMain = (raw) => {
+            if (isLbs) return Math.round(raw / 5) * 5;
+            return isDb ? Math.round(raw) : round2_5(raw);
+        };
+        const unitText = isLbs ? 'lbs' : 'kg';
+        const validHistory = history.filter(r => {
+            if (r.cycle < state.cycle) return true;
+            if (r.cycle === state.cycle && r.week < state.week) return true;
+            return false;
         });
+        const targetReps = tpl.reps || "12-15회";
+        const targetSets = tpl.sets || "3-4세트";
 
-        // 기본 승급/감량 멀티플라이어
-        let mult = 0.90;
-        const r = best.r;
-
-        if (r >= 11)      mult = 1.05;
-        else if (r >= 8)  mult = 1.025;
-        else if (r >= 6)  mult = 1.0125;
-        else if (r === 5) mult = 1.0;
-        else if (r === 4) mult = 0.975;
-        else if (r === 3) mult = 0.95;
-
-        // 💡 덤벨인 경우: 승급 폭을 살짝 줄여서 더 보수적으로
-        if (isDb) {
-            // 너무 공격적인 증량은 캡
-            if (mult > 1.025) mult = 1.025;
-            // 너무 큰 감량도 방지 (3~4회밖에 안 나오는 상황)
-            if (mult < 0.95) mult = 0.95;
+        if (tpl.type === 'WARMUP') {
+            if (validHistory.length > 0) {
+                const sortedHistory = [...validHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+                const lastRec = sortedHistory[sortedHistory.length - 1];
+                if (lastRec && lastRec.sets.length > 0) {
+                    const lastSet = lastRec.sets[lastRec.sets.length - 1];
+                    if (lastSet.w) return `🔥 목표: ${lastSet.w}${unitText} x ${targetReps} (${targetSets})`;
+                }
+            }
+            return `🔥 초기 설정: 몸이 잘 풀리는 적당한 무게 찾기`;
         }
-
-        const nextE1rm = best.e * mult;
-
-        // e1RM → 실제 탑세트 중량 (대략 80% 정도 목표)
-        let nextW = nextE1rm / 1.2;
-        nextW = roundMain(nextW);
-
-        // 증량인데 숫자가 안 변하면(라운딩 때문에) 최소 증량 강제
-        if (mult > 1.0 && nextW <= best.w) {
-            const minStep = isLbs ? 5 : (isDb ? 1 : 2.5);
-            nextW = roundMain(best.w + minStep);
+        if (tpl.progression.unit === 'text') return `${tpl.reps} (${tpl.sets})`;
+        if (tpl.type === 'MAIN') {
+            if (phase === "디로딩") return "회복: 평소 워킹 중량의 50% (자세 집중)";
+            let peak = 0;
+            validHistory.forEach(rec => rec.sets.forEach(s => {
+                const e = e1rm(Number(s.w), Number(s.r));
+                if (e > peak) peak = e;
+            }));
+            if (peak === 0) {
+                const startW = roundMain(tpl.progression.base || 0);
+                return `🔥 초기 측정: 10회 반복 가능한 무게 찾기 (권장: ${startW}${unitText})`;
+            }
+            if (phase === "축적 주기") {
+                let target = peak * 0.7;
+                target = roundMain(target);
+                return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트)`;
+            }
+            const lastStrength = validHistory.filter(r => r.phase === "강화 주기").sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+            if (!lastStrength) {
+                let startW = peak * 0.9;
+                startW = roundMain(startW);
+                return `🔥 강화 목표: 탑 세트 ${startW}${unitText} x AMRAP`;
+            }
+            let best = { w: 0, r: 0, e: 0 };
+            lastStrength.sets.forEach(s => {
+                const wNum = Number(s.w);
+                const rNum = Number(s.r);
+                const e = e1rm(wNum, rNum);
+                if (e > best.e) best = { w: wNum, r: rNum, e };
+            });
+            let mult = 0.90;
+            const r = best.r;
+            if (r >= 11) mult = 1.05;
+            else if (r >= 8) mult = 1.025;
+            else if (r >= 6) mult = 1.0125;
+            else if (r === 5) mult = 1.0;
+            else if (r === 4) mult = 0.975;
+            else if (r === 3) mult = 0.95;
+            if (isDb) {
+                if (mult > 1.025) mult = 1.025;
+                if (mult < 0.95) mult = 0.95;
+            }
+            const nextE1rm = best.e * mult;
+            let nextW = nextE1rm / 1.2;
+            nextW = roundMain(nextW);
+            if (mult > 1.0 && nextW <= best.w) {
+                const minStep = isLbs ? 5 : (isDb ? 1 : 2.5);
+                nextW = roundMain(best.w + minStep);
+            }
+            const backoff = roundMain(nextW * 0.8);
+            let f1 = roundMain(nextW * 0.5);
+            let f2 = roundMain(nextW * 0.75);
+            return `<span class="block mb-1 text-blue-600">🔥 강화: 피더(${f1}${unitText}x5, ${f2}${unitText}x3)</span><span class="block pl-4 text-red-600 font-bold mb-0.5 text-sm">↳ Top 1세트(${nextW}${unitText} x 최대)</span><span class="block pl-4 text-red-600 font-bold text-sm">↳ Back-off 1세트(${backoff}${unitText} x 10)</span>`;
         }
-
-        const backoff = roundMain(nextW * 0.8);
-        let f1 = roundMain(nextW * 0.5);
-        let f2 = roundMain(nextW * 0.75);
-
-        return `
-            <span class="block mb-1 text-blue-600">🔥 강화: 피더(${f1}${unitText}x5, ${f2}${unitText}x3)</span>
-            <span class="block pl-4 text-red-600 font-bold mb-0.5 text-sm">↳ Top 1세트(${nextW}${unitText} x 최대)</span>
-            <span class="block pl-4 text-red-600 font-bold text-sm">↳ Back-off 1세트(${backoff}${unitText} x 10)</span>
-        `;
+        return calculateAegisGoal(tplId, validHistory, custom, unitText);
     }
-
-    // 4) 그 외(Sub / Finish) 보조운동은 AEGIS 로직 사용
-    return calculateAegisGoal(tplId, validHistory, custom, unitText);
-}
 
     // ==========================================
     // 4. UI RENDERING
     // ==========================================
     function renderWeekScroller() {
         const el = document.getElementById('week-scroller');
-        
         if (el.children.length === 0) {
             for (let i = 1; i <= 13; i++) {
                 const btn = document.createElement('button');
                 btn.textContent = `${i}주`;
-                btn.onclick = () => { 
-                    state.week = i; 
-                    saveData(); 
-                    render(); 
-                };
+                btn.onclick = () => { state.week = i; saveData(); render(); };
                 el.appendChild(btn);
             }
         }
-
         Array.from(el.children).forEach((btn, index) => {
             const weekNum = index + 1;
             const isActive = weekNum === state.week;
             btn.className = `flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 ${isActive ? 'bg-blue-600 text-white shadow-md shadow-blue-200 scale-105' : 'bg-white text-slate-400 border border-slate-100 hover:bg-slate-50'}`;
-            
-            if (isActive) {
-                btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }
+            if (isActive) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         });
     }
     
     function scrollWeeks(direction) {
         const el = document.getElementById('week-scroller');
-        const scrollAmount = 150; 
-        el.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+        el.scrollBy({ left: direction * 150, behavior: 'smooth' });
     }
 
     function changeCycle(delta) {
@@ -861,15 +708,10 @@ function calculateGoal(tplId) {
     function changeWeek(delta) {
         let nextWeek = state.week + delta;
         if (nextWeek > 13) {
-            state.week = 1;
-            state.cycle++;
+            state.week = 1; state.cycle++;
         } else if (nextWeek < 1) {
-            if (state.cycle > 1) {
-                state.week = 13;
-                state.cycle--;
-            } else {
-                 return; // Cannot go below Cycle 1 Week 1
-            }
+            if (state.cycle > 1) { state.week = 13; state.cycle--; }
+            else return;
         } else {
             state.week = nextWeek;
         }
@@ -885,6 +727,15 @@ function calculateGoal(tplId) {
         document.getElementById('phase-badge').textContent = phase;
         document.getElementById('phase-badge').className = `px-2 py-0.5 rounded text-[10px] font-bold text-white backdrop-blur-sm shadow-sm ${phase.includes('강화') ? 'bg-red-500/80' : phase === '디로딩' ? 'bg-slate-500/80' : 'bg-green-500/80'}`;
         
+        // 🔥🔥 [수정] 레벨 배지 업데이트 🔥🔥
+        const levelBtn = document.getElementById('level-display');
+        levelBtn.textContent = `Lv. ${state.level}`;
+        // 레벨에 따른 색상 구분
+        if (state.level === 'BEGINNER') levelBtn.className = "text-[10px] font-bold text-white bg-green-500 px-2 py-0.5 rounded mt-0.5 hover:bg-green-600 transition shadow-sm";
+        else if (state.level === 'INTERMEDIATE') levelBtn.className = "text-[10px] font-bold text-white bg-blue-500 px-2 py-0.5 rounded mt-0.5 hover:bg-blue-600 transition shadow-sm";
+        else levelBtn.className = "text-[10px] font-bold text-white bg-slate-800 px-2 py-0.5 rounded mt-0.5 hover:bg-slate-700 transition shadow-sm";
+
+
         document.getElementById('routine-title').textContent = `${state.day.toUpperCase()} ${type}`;
         
         let subText = "균형 잡힌 발달";
@@ -912,7 +763,9 @@ function calculateGoal(tplId) {
         const listEl = document.getElementById('exercise-list');
         listEl.innerHTML = '';
         
-        const routineList = ROUTINES[type]?.[state.day] || [];
+        // 🔥🔥 [수정] 레벨에 따른 루틴 리스트 로드 🔥🔥
+        // ROUTINES_DB에서 현재 레벨 -> 타입(A/B/C) -> 요일(pull/push/leg) 순으로 가져옴
+        const routineList = ROUTINES_DB[state.level]?.[type]?.[state.day] || [];
         
         routineList.forEach((tplId, index) => {
             if (!TEMPLATES[tplId]) return;
@@ -948,7 +801,7 @@ function calculateGoal(tplId) {
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
                         </button>
                         <button onclick="openModal('${tplId}')" class="text-slate-300 hover:text-slate-500 p-2 -mr-2" title="설정">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                         </button>
                     </div>
                 </div>
@@ -961,7 +814,6 @@ function calculateGoal(tplId) {
                     <p class="text-xs text-slate-500 leading-relaxed mb-2">${tpl.cue.tip}</p>
                     ${custom.note ? `<p class="text-xs text-amber-600 font-medium border-t border-slate-200 pt-1">📝 ${custom.note}</p>` : ''}
                     
-                    <!-- Modified Goal Display (flex-col -> items-start for multi-line) -->
                     <div class="mt-2 pt-2 border-t border-slate-200 font-bold text-blue-600 text-sm flex items-start gap-1">
                         <svg class="mt-0.5 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                         <div id="goal-${tplId}">${goalText}</div>
@@ -984,12 +836,12 @@ function calculateGoal(tplId) {
     function updateGoal(tplId) {
         const goalEl = document.getElementById(`goal-${tplId}`);
         if (!goalEl) return;
-            goalEl.innerHTML = calculateGoal(tplId);
-}
+        goalEl.innerHTML = calculateGoal(tplId);
+    }
 
     function renderSetRow(container, tplId, idx, data, isLbs) {
         const div = document.createElement('div');
-        div.className = "flex items-center gap-1 mb-2"; // Gap reduced
+        div.className = "flex items-center gap-1 mb-2";
         const placeholderUnit = isLbs ? 'lbs' : 'kg';
         
         div.innerHTML = `
@@ -1007,67 +859,40 @@ function calculateGoal(tplId) {
         container.appendChild(div);
     }
 
-    // ==========================================
-    // 5. INTERACTION LOGIC
-    // ==========================================
     function setDay(d) { state.day = d; saveData(); render(); }
     function addSet(tplId) {
         const c = document.getElementById(`sets-${tplId}`);
         const custom = state.customs[tplId] || {};
         renderSetRow(c, tplId, c.children.length + 1, {w:'', r:''}, custom.unit === 'lbs');
-
-            // ✅ 세트 추가 버튼 눌렀을 때 바로 타이머 시작
         startTimer(tplId);
     }
     function removeSet(btn, tplId) {
         btn.parentElement.remove();
         saveRecord(tplId);
-        render();
+        render(); // render() here is debatable but safer to keep consistency
     }
-function saveRecord(tplId) {
-    const rows = document.getElementById(`sets-${tplId}`).children;
-    const sets = [];
-    for (let r of rows) {
-        const w = r.querySelector('.input-w').value;
-        const rVal = r.querySelector('.input-r').value;
-        if (w || rVal) sets.push({ w, r: rVal });
-    }
-
-    if (!state.records[tplId]) state.records[tplId] = [];
-    const { phase } = getPhaseInfo(state.week, state.cycle);
-    const existingIdx = state.records[tplId].findIndex(
-        (r) =>
-            r.week === state.week &&
-            r.cycle === state.cycle &&
-            r.day === state.day
-    );
-
-    const newRecord = {
-        date: new Date().toISOString(),
-        week: state.week,
-        cycle: state.cycle,
-        day: state.day,
-        phase,
-        sets,
-    };
-
-    if (existingIdx > -1) {
-        if (sets.length === 0) state.records[tplId].splice(existingIdx, 1);
-        else state.records[tplId][existingIdx] = newRecord;
-    } else if (sets.length > 0) {
-        state.records[tplId].push(newRecord);
+    function saveRecord(tplId) {
+        const rows = document.getElementById(`sets-${tplId}`).children;
+        const sets = [];
+        for (let r of rows) {
+            const w = r.querySelector('.input-w').value;
+            const rVal = r.querySelector('.input-r').value;
+            if (w || rVal) sets.push({ w, r: rVal });
+        }
+        if (!state.records[tplId]) state.records[tplId] = [];
+        const { phase } = getPhaseInfo(state.week, state.cycle);
+        const existingIdx = state.records[tplId].findIndex(r => r.week === state.week && r.cycle === state.cycle && r.day === state.day);
+        const newRecord = { date: new Date().toISOString(), week: state.week, cycle: state.cycle, day: state.day, phase, sets };
+        if (existingIdx > -1) {
+            if (sets.length === 0) state.records[tplId].splice(existingIdx, 1);
+            else state.records[tplId][existingIdx] = newRecord;
+        } else if (sets.length > 0) {
+            state.records[tplId].push(newRecord);
+        }
+        saveData();
+        updateGoal(tplId);
     }
 
-    saveData();
-
-    // ⛔️ 전체 리렌더 X
-    // render();
-
-    // ✅ 이 운동 카드의 목표 텍스트만 업데이트
-    updateGoal(tplId);
-}
-
-    // --- Modal Logic ---
     let editingId = null;
     const modalEl = document.getElementById('custom-modal');
     const modalPanel = document.getElementById('modal-panel');
@@ -1134,135 +959,78 @@ function saveRecord(tplId) {
         histEl.classList.add('opacity-0');
         setTimeout(() => histEl.classList.add('invisible'), 300);
     }
-
-    // Guide Modal
     function openGuide() {
         guideEl.classList.remove('invisible', 'opacity-0');
         guidePanel.classList.remove('scale-95');
     }
     function closeGuide() {
         const checked = document.getElementById('guide-checkbox').checked;
-        if (checked) {
-            state.hideGuide = true;
-            saveData();
-        }
+        if (checked) { state.hideGuide = true; saveData(); }
         guidePanel.classList.add('scale-95');
         guideEl.classList.add('opacity-0');
         setTimeout(() => guideEl.classList.add('invisible'), 300);
     }
-
-    // YouTube Search
     function openYoutubeSearch(query) {
         window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
     }
 
-    // --- Timer Logic (Smart Countdown) ---
     let timerInt;
-    let timerHideTimeout; // 타이머 끝난 후 자동 숨김용
-    
-    function checkTimer(tplId, input) {
-        const row = input.parentElement.parentElement; // input inside div wrapper inside row
-        const container = input.closest('.flex'); 
-        const weightInput = container.querySelector('.input-w');
-        
-        if(input.value && weightInput.value) {
-            startTimer(tplId);
-        }
+    let timerHideTimeout;
+    function startTimer(tplId) {
+        clearInterval(timerInt);
+        clearTimeout(timerHideTimeout);
+        initAudio();
+        acquireWakeLock();
+        const tpl = TEMPLATES[tplId];
+        const custom = state.customs[tplId] || {};
+        const { phase } = getPhaseInfo(state.week, state.cycle);
+        const duration = getRestTime(tplId, phase);
+        let remaining = duration;
+        const banner = document.getElementById('timer-banner');
+        const timerEl = document.getElementById('timer-display');
+        const statusEl = document.getElementById('timer-status-text');
+        statusEl.textContent = "Resting";
+        statusEl.className = "timer-status-label text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5";
+        timerEl.classList.remove('timer-flash');
+        banner.classList.remove('hide');
+        banner.classList.add('show');
+        document.getElementById('timer-exercise-name').textContent = custom.name || tpl.defaultName;
+        const updateDisplay = () => {
+            const m = Math.floor(remaining / 60).toString().padStart(2,'0');
+            const s = (remaining % 60).toString().padStart(2,'0');
+            timerEl.textContent = `${m}:${s}`;
+        };
+        updateDisplay();
+        timerInt = setInterval(() => {
+            remaining--;
+            if (remaining >= 0) {
+                updateDisplay();
+            } else {
+                clearInterval(timerInt);
+                playBeep(); playBeep();
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                statusEl.textContent = "Ready!";
+                statusEl.className = "timer-status-label text-[10px] text-green-400 font-bold uppercase tracking-wider mb-0.5";
+                timerEl.classList.add('timer-flash');
+                timerHideTimeout = setTimeout(() => stopTimer(), 3000);
+            }
+        }, 1000);
+    }
+    function stopTimer() {
+        clearInterval(timerInt);
+        clearTimeout(timerHideTimeout);
+        const banner = document.getElementById('timer-banner');
+        const timerEl = document.getElementById('timer-display');
+        banner.classList.remove('show');
+        banner.classList.add('hide');
+        timerEl.classList.remove('timer-flash');
     }
 
-function startTimer(tplId) {
-    // 기존 타이머 초기화
-    clearInterval(timerInt);
-    clearTimeout(timerHideTimeout);
-
-    initAudio();
-    acquireWakeLock();
-
-    const tpl = TEMPLATES[tplId];
-    const custom = state.customs[tplId] || {};
-    const { phase } = getPhaseInfo(state.week, state.cycle);
-
-    const duration = getRestTime(tplId, phase);
-    let remaining = duration;
-
-    const banner = document.getElementById('timer-banner');
-    const timerEl = document.getElementById('timer-display');
-    const statusEl = document.getElementById('timer-status-text');
-
-    // 상태 초기화
-    statusEl.textContent = "Resting";
-    statusEl.className =
-        "timer-status-label text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5";
-
-    // 숫자 플래시 효과 제거 (초기화)
-    timerEl.classList.remove('timer-flash');
-
-    banner.classList.remove('hide');
-    banner.classList.add('show');
-
-    document.getElementById('timer-exercise-name').textContent =
-        custom.name || tpl.defaultName;
-
-    const updateDisplay = () => {
-        const m = Math.floor(remaining / 60).toString().padStart(2,'0');
-        const s = (remaining % 60).toString().padStart(2,'0');
-        timerEl.textContent = `${m}:${s}`;
-    };
-    updateDisplay();
-
-    timerInt = setInterval(() => {
-        remaining--;
-
-        if (remaining >= 0) {
-            updateDisplay();
-        } else {
-            // 타이머 종료 지점
-            clearInterval(timerInt);
-
-            playBeep();
-            playBeep();
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-
-            statusEl.textContent = "Ready!";
-            statusEl.className =
-                "timer-status-label text-[10px] text-green-400 font-bold uppercase tracking-wider mb-0.5";
-
-            // 🔥 숫자만 플래시
-            timerEl.classList.add('timer-flash');
-
-            // ⏳ 3초 후 자동 닫힘
-            timerHideTimeout = setTimeout(() => {
-                stopTimer();
-            }, 3000);
-        }
-    }, 1000);
-}
-
-function stopTimer() {
-    clearInterval(timerInt);
-    clearTimeout(timerHideTimeout);
-
-    const banner = document.getElementById('timer-banner');
-    const timerEl = document.getElementById('timer-display');
-
-    banner.classList.remove('show');
-    banner.classList.add('hide');
-
-    // 숫자 플래시 제거
-    timerEl.classList.remove('timer-flash');
-}
-
-    // INIT
     window.onload = () => {
         loadData();
-        render(); 
-        
-        // Show guide if not hidden
-        if (!state.hideGuide) {
-            setTimeout(openGuide, 500); // Small delay for UX
-        }
+        render();
+        if (!state.hideGuide) setTimeout(openGuide, 500);
     };
 </script>
 </body>
 </html>
-
