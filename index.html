@@ -548,7 +548,10 @@
             }
         }
 
-        const requiredSets = 4;
+        const setMatch = targetSets.match(/(\d+)(?:~|-)?(\d+)?/);
+        const maxSetsGoal = setMatch ? parseInt(setMatch[2] || setMatch[1], 10) : 4; 
+        const requiredSets = maxSetsGoal;
+        
         let success = false;
         if (lastRec.sets.length >= requiredSets) {
             success = true;
@@ -1023,5 +1026,6 @@
 </script>
 </body>
 </html>
+
 
 
