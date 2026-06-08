@@ -453,7 +453,7 @@
         const tpl = TEMPLATES[tplId];
         if (!tpl) return false;
         const custom = state.customs[tplId] || {};
-        const nameBundle = [tpl.defaultName || "", tpl.example || "", custom.name || ""].join(" ").toLowerCase();
+        const nameBundle = [tpl.defaultName || "", custom.name || ""].join(" ").toLowerCase();
         const dumbbellKeywords = ["dumbbell", "db", "덤벨", "덤밸", "덤벨프레스", "덤밸프레스"];
         return dumbbellKeywords.some(kw => nameBundle.includes(kw));
     }
