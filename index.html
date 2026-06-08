@@ -537,7 +537,7 @@
             lastRec.sets.forEach((s) => {
                 const w = Number(s.w) || 0;
                 const r = Number(s.r) || 0;
-                if (w >= baseWeight && r >= minReps) okSets++;
+                if (w >= lastAttemptWeight && r >= minReps) okSets++;
             });
             if (okSets < requiredLowLevelSets) {
                 let decKg = DEC_STEP_KG;
