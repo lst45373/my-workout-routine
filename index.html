@@ -389,22 +389,51 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    function playBeep() {
+    function playBeep(startTime, frequency, type, duration) {
         if (!audioCtx) return;
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        oscillator.start();
-        gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
-        oscillator.stop(audioCtx.currentTime + 0.5);
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type || 'square';
+        osc.frequency.setValueAtTime(frequency || 1200, startTime);
+        
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.1, startTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+    }
+
+    function playAlarmSequence() {
+        if (!audioCtx) initAudio();
+        // 백그라운드 복귀 시 오디오 컨텍스트가 멈춰있을 수 있으므로 강제 재개
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+        // 명확한 디지털 알람 소리 (뚜-뚜-뚜  뚜-뚜-뚜)
+        playBeep(now, 1200, 'square', 0.12);
+        playBeep(now + 0.2, 1200, 'square', 0.12);
+        playBeep(now + 0.4, 1200, 'square', 0.12);
+        
+        playBeep(now + 0.8, 1200, 'square', 0.12);
+        playBeep(now + 1.0, 1200, 'square', 0.12);
+        playBeep(now + 1.2, 1200, 'square', 0.12);
+
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 100, 100, 100, 100, 300, 100, 100, 100, 100, 100]);
+        }
     }
 
     document.addEventListener('visibilitychange', async () => {
-        if (wakeLock !== null && document.visibilityState === 'visible') await acquireWakeLock();
+        if (document.visibilityState === 'visible') {
+            if (wakeLock !== null) await acquireWakeLock();
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            if (timerInt) checkTimer(); // 화면으로 돌아오면 즉시 시간 재계산
+        }
     });
 
     function initFeatures() {
@@ -982,6 +1011,34 @@
 
     let timerInt;
     let timerHideTimeout;
+    let targetEndTime = 0;
+
+    function checkTimer() {
+        if (!targetEndTime) return;
+        
+        let remaining = Math.ceil((targetEndTime - Date.now()) / 1000);
+        const timerEl = document.getElementById('timer-display');
+        const statusEl = document.getElementById('timer-status-text');
+        
+        if (remaining <= 0) {
+            clearInterval(timerInt);
+            timerInt = null;
+            targetEndTime = 0;
+            
+            playAlarmSequence();
+            
+            timerEl.textContent = `00:00`;
+            statusEl.textContent = "Ready!";
+            statusEl.className = "timer-status-label text-[10px] text-green-400 font-bold uppercase tracking-wider mb-0.5";
+            timerEl.classList.add('timer-flash');
+            timerHideTimeout = setTimeout(() => stopTimer(), 4000);
+        } else {
+            const m = Math.floor(remaining / 60).toString().padStart(2,'0');
+            const s = (remaining % 60).toString().padStart(2,'0');
+            timerEl.textContent = `${m}:${s}`;
+        }
+    }
+
     function startTimer(tplId) {
         clearInterval(timerInt);
         clearTimeout(timerHideTimeout);
@@ -991,40 +1048,30 @@
         const custom = state.customs[tplId] || {};
         const { phase } = getPhaseInfo(state.week, state.cycle);
         const duration = getRestTime(tplId, phase);
-        let remaining = duration;
+        
+        targetEndTime = Date.now() + duration * 1000;
+        
         const banner = document.getElementById('timer-banner');
         const timerEl = document.getElementById('timer-display');
         const statusEl = document.getElementById('timer-status-text');
+        
         statusEl.textContent = "Resting";
         statusEl.className = "timer-status-label text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5";
         timerEl.classList.remove('timer-flash');
         banner.classList.remove('hide');
         banner.classList.add('show');
         document.getElementById('timer-exercise-name').textContent = custom.name || tpl.defaultName;
-        const updateDisplay = () => {
-            const m = Math.floor(remaining / 60).toString().padStart(2,'0');
-            const s = (remaining % 60).toString().padStart(2,'0');
-            timerEl.textContent = `${m}:${s}`;
-        };
-        updateDisplay();
-        timerInt = setInterval(() => {
-            remaining--;
-            if (remaining >= 0) {
-                updateDisplay();
-            } else {
-                clearInterval(timerInt);
-                playBeep(); playBeep();
-                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                statusEl.textContent = "Ready!";
-                statusEl.className = "timer-status-label text-[10px] text-green-400 font-bold uppercase tracking-wider mb-0.5";
-                timerEl.classList.add('timer-flash');
-                timerHideTimeout = setTimeout(() => stopTimer(), 3000);
-            }
-        }, 1000);
+        
+        checkTimer();
+        // 모바일 브라우저의 쓰로틀링(Throttling)을 대비하여 간격을 짧게(200ms) 설정
+        timerInt = setInterval(checkTimer, 200);
     }
+    
     function stopTimer() {
         clearInterval(timerInt);
         clearTimeout(timerHideTimeout);
+        timerInt = null;
+        targetEndTime = 0;
         const banner = document.getElementById('timer-banner');
         const timerEl = document.getElementById('timer-display');
         banner.classList.remove('show');
