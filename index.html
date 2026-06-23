@@ -709,7 +709,11 @@
         render();
     }
 
-    function render() {
+    function render(preserveScroll = false) {
+        const mainContent = document.getElementById('main-content');
+        const mainScroll = mainContent ? mainContent.scrollTop : 0;
+        const winScroll = window.scrollY || document.documentElement.scrollTop;
+
         renderWeekScroller();
 
         const { phase, type } = getPhaseInfo(state.week, state.cycle);
@@ -769,8 +773,8 @@
             const sets = todayRec ? todayRec.sets : [{w:'', r:''}];
 
             const card = document.createElement('div');
-            card.className = "bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm relative card-enter";
-            card.style.animationDelay = `${index * 0.05}s`;
+            card.className = "bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm relative" + (preserveScroll ? "" : " card-enter");
+            if (!preserveScroll) card.style.animationDelay = `${index * 0.05}s`;
             
             let typeBadgeClass = 'bg-slate-100 text-slate-500';
             if (tpl.type === 'MAIN') typeBadgeClass = 'bg-blue-50 text-blue-600';
@@ -821,6 +825,16 @@
             const setContainer = document.getElementById(`sets-${tplId}`);
             sets.forEach((s, i) => renderSetRow(setContainer, tplId, i+1, s, isLbs));
         });
+
+        if (preserveScroll) {
+            setTimeout(() => {
+                if (mainContent) mainContent.scrollTop = mainScroll;
+                window.scrollTo(0, winScroll);
+            }, 0);
+        } else {
+            if (mainContent) mainContent.scrollTop = 0;
+            window.scrollTo(0, 0);
+        }
     }
 
     function updateGoal(tplId) {
@@ -859,7 +873,7 @@
     function removeSet(btn, tplId) {
         btn.parentElement.remove();
         saveRecord(tplId);
-        render(); // render() here is debatable but safer to keep consistency
+        render(true); // render() here is debatable but safer to keep consistency
     }
     function saveRecord(tplId) {
         const rows = document.getElementById(`sets-${tplId}`).children;
@@ -921,7 +935,7 @@
         if(name || note || unit !== 'kg' || increment) state.customs[editingId] = { name, note, unit, increment };
         else delete state.customs[editingId];
         saveData();
-        render();
+        render(true);
         closeModal();
     }
     function openHistory(id) {
