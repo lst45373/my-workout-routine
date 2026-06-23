@@ -194,7 +194,7 @@
                         운동 설정 (커스터마이징)
                     </h4>
                     <p class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
-                        각 운동 카드 우측 상단의 <strong>설정 아이콘</strong>을 눌러, 내가 다니는 헬스장의 <strong>기구 이름</strong>이나 <strong>단위(kg/lbs)</strong>, 그리고 <strong>나만의 팁</strong>을 저장할 수 있습니다.
+                        각 운동 카드 우측 상단의 <strong>설정 아이콘</strong>을 눌러, 내가 다니는 헬스장의 <strong>기구 이름</strong>이나 <strong>단위(kg/lbs)</strong>, <strong>증량 단위</strong>, 그리고 <strong>나만의 팁</strong>을 저장할 수 있습니다.
                     </p>
                 </div>
             </div>
@@ -223,6 +223,7 @@
                         <label class="flex-1 relative cursor-pointer"><input type="radio" name="custom-unit" value="lbs" class="peer sr-only"><div class="p-3 text-center rounded-xl border border-slate-200 bg-white text-slate-600 font-bold peer-checked:bg-blue-600 peer-checked:text-white">LBS</div></label>
                     </div>
                 </div>
+                <div><label class="block text-sm font-bold text-slate-900 mb-2">증량 단위 (비워두면 자동)</label><input type="number" step="any" id="custom-increment-input" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800" placeholder="예: 2.5, 5, 1 등"></div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">메모</label><textarea id="custom-note-input" rows="2" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none resize-none text-sm"></textarea></div>
                 <button onclick="saveCustomization()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-transform active:scale-95">저장하기</button>
             </div>
@@ -280,7 +281,7 @@
         "push_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 체스트 프레스 (뉴트럴그립)", example: "예: 뉴트럴그립 인클라인 프레스", cue: { primary: "윗가슴", tip: "벤치 각도를 30도로 설정합니다. 어깨 관절의 부담을 줄이면서 윗가슴 상부(쇄골지)를 집중적으로 공략하는 것이 핵심입니다. 등을 벤치에 단단히 고정하고, 팔꿈치를 과도하게 벌리지 말고 몸통에 가까운 궤적으로 움직이세요. 덤벨을 내릴 때 윗가슴이 최대로 늘어나는 것을 느끼고, 들어 올릴 때는 윗가슴을 강하게 쥐어짠다는 느낌에 집중하세요." }, progression: { base: { BEGINNER: 12, INTERMEDIATE: 20, ADVANCED: 26 }, unit: "한쪽" } },
         "push_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스 (뉴트럴그립)", example: "예: 너틸러스 체스트 (뉴트럴)", cue: { primary: "가슴 안쪽", tip: "V자 그립으로 가슴 중앙부를 강하게 수축시킵니다. 등을 패드에 기대 안정성을 확보하고, 프레스 동작 마지막에 견갑을 살짝 전인(내밀어)시켜 가슴 안쪽까지 완전히 쥐어짜주세요." }, progression: { base: { BEGINNER: 30, INTERMEDIATE: 50, ADVANCED: 70 }, unit: "총" } },
         "push_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (뉴트럴그립립)", example: "예: 너틸러스 숄더 (뉴트럴)", cue: { primary: "전면/측면 어깨", tip: "정자세로 앉아 등받이에 등을 완전히 밀착합니다. 뉴트럴 그립을 잡고 어깨를 아래로 누른 상태를 유지하며, 머신 궤적을 따라 핸들을 위+안쪽으로 밀어 올립니다. 천천히 저항하며 시작 위치로 돌아옵니다." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 25, ADVANCED: 35 }, unit: "총" } },
-        "push_c_04": { type: "SUB", sets: "3-4세트", reps: "10-15회", defaultName: "사이드 레터럴 레이즈", example: "예: 사레레 머신", cue: { primary: "측면 삼각근", tip: "어깨 측면(측면 삼각근)을 완벽하게 고립하여 어깨 프레임을 넓히는 것이 목표입니다. 팔꿈치로 패드를 들어올린다는 느낌으로 수행하고, 승모근이 으쓱하지 않도록 통제하는 것이 핵심입니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 10, ADVANCED: 15 }, unit: "kg", increment: 2.5 } },
+        "push_c_04": { type: "SUB", sets: "3-4세트", reps: "10-15회", defaultName: "사이드 레터럴 레이즈", example: "예: 사레레 머신", cue: { primary: "측면 삼각근", tip: "어깨 측면(측면 삼각근)을 완벽하게 고립하여 어깨 프레임을 넓히는 것이 목표입니다. 팔꿈치로 패드를 들어올린다는 느낌으로 수행하고, 승모근이 으쓱하지 않도록 통제하는 초점이 핵심입니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 10, ADVANCED: 15 }, unit: "kg", increment: 2.5 } },
         "push_c_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "인클라인 컬", example: "예: 인클라인 케이블 컬", cue: { primary: "이두 장두", tip: "벤치에 누워 이두근을 최대로 이완시킨 상태에서 시작하여, 이두근의 장두(긴 갈래)를 집중적으로 공략합니다. 지속적인 장력을 느끼는 것이 핵심입니다." }, progression: { base: { BEGINNER: 4, INTERMEDIATE: 6, ADVANCED: 7 }, unit: "한쪽", increment: 2.5 } },
         
         "leg_a_w1": { type: "WARMUP", sets: "2세트", reps: "10-12회", defaultName: "이너 타이", example: "예: 노틸러스 이너 타이", cue: { primary: "내전근", tip: "고관절 내전근을 활성화합니다." }, progression: { base: 0, unit: "text" } },
@@ -487,8 +488,6 @@
         const tpl = TEMPLATES[tplId];
         const currentWeek = state.week;
         const currentCycle = state.cycle;
-        const DEC_STEP_KG = 2.5;
-        const INC_STEP_KG = 2.5;
         const targetReps = tpl.reps || "12-15회";
         const targetSets = tpl.sets || "3-4세트";
         const repMatch = targetReps.match(/(\d+)/);
@@ -540,9 +539,7 @@
                 if (w >= lastAttemptWeight && r >= minReps) okSets++;
             });
             if (okSets < requiredLowLevelSets) {
-                let decKg = DEC_STEP_KG;
-                let dec = decKg;
-                if (custom.unit === "lbs") dec = Math.round(decKg * 2.2 / 5) * 5;
+                let dec = custom.increment ? Number(custom.increment) : (custom.unit === "lbs" ? Math.round(2.5 * 2.2 / 5) * 5 : (tpl.progression.increment || 2.5));
                 const reducedWeight = Math.max(0, lastAttemptWeight - dec);
                 return `🔥 감량 권장: ${reducedWeight}${unitText} x ${targetReps} (${targetSets})`;
             }
@@ -566,9 +563,7 @@
         let nextWeight = lastAttemptWeight;
         let status = "유지";
         if (success) {
-            let incKg = INC_STEP_KG;
-            let inc = incKg;
-            if (custom.unit === "lbs") inc = Math.round(incKg * 2.2 / 5) * 5;
+            let inc = custom.increment ? Number(custom.increment) : (custom.unit === "lbs" ? Math.round(2.5 * 2.2 / 5) * 5 : (tpl.progression.increment || 2.5));
             nextWeight += inc;
             status = "증량 도전";
         }
@@ -582,10 +577,16 @@
         const custom = state.customs[tplId] || {};
         const isLbs = custom.unit === 'lbs';
         const isDb = isDumbbellExercise(tplId);
+        
         const roundMain = (raw) => {
+            if (custom.increment) {
+                const inc = Number(custom.increment);
+                return Math.round(raw / inc) * inc;
+            }
             if (isLbs) return Math.round(raw / 5) * 5;
             return isDb ? Math.round(raw) : round2_5(raw);
         };
+        
         const unitText = isLbs ? 'lbs' : 'kg';
         const validHistory = history.filter(r => {
             if (r.cycle < state.cycle) return true;
@@ -652,7 +653,7 @@
             let nextW = nextE1rm / 1.2;
             nextW = roundMain(nextW);
             if (mult > 1.0 && nextW <= best.w) {
-                const minStep = isLbs ? 5 : (isDb ? 1 : 2.5);
+                const minStep = custom.increment ? Number(custom.increment) : (isLbs ? 5 : (isDb ? 1 : 2.5));
                 nextW = roundMain(best.w + minStep);
             }
             const backoff = roundMain(nextW * 0.8);
@@ -899,6 +900,7 @@
         nameInput.value = custom.name || '';
         nameInput.placeholder = tpl.example || "예: 커스텀 운동 이름";
         document.getElementById('custom-note-input').value = custom.note || '';
+        document.getElementById('custom-increment-input').value = custom.increment || '';
         const unit = custom.unit || 'kg';
         document.querySelector(`input[name="custom-unit"][value="${unit}"]`).checked = true;
         modalEl.classList.remove('invisible', 'opacity-0');
@@ -915,7 +917,8 @@
         const name = document.getElementById('custom-name-input').value;
         const note = document.getElementById('custom-note-input').value;
         const unit = document.querySelector('input[name="custom-unit"]:checked').value;
-        if(name || note || unit !== 'kg') state.customs[editingId] = { name, note, unit };
+        const increment = document.getElementById('custom-increment-input').value;
+        if(name || note || unit !== 'kg' || increment) state.customs[editingId] = { name, note, unit, increment };
         else delete state.customs[editingId];
         saveData();
         render();
@@ -1023,5 +1026,3 @@
 </script>
 </body>
 </html>
-
-
