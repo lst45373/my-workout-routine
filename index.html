@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.6</title>
+    <title>FF Growth Protocol v1.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -586,15 +586,47 @@
         return { phase, type };
     }
 
-    function getRestTime(tplId, phase) {
+    // 휴식시간: 타입·페이즈별 기준값에 '방금 완료한 세트의 반복수(=피로 신호)'로 ±조정.
+    // 반환: { duration(초), reason(조정 이유 문구, 없으면 '') }
+    function getRestTime(tplId, phase, lastReps) {
         const tpl = TEMPLATES[tplId];
-        if (!tpl) return 90;
-        if (tpl.type === 'WARMUP') return 60;
+        if (!tpl) return { duration: 90, reason: '' };
+        if (tpl.type === 'WARMUP') return { duration: 60, reason: '' };
+
+        const isLeg = tplId.startsWith('leg_'); // 하체 대근육: 심폐·전신 피로 커서 기준 휴식 자체를 길게
+        const reps = (lastReps == null || isNaN(lastReps) || lastReps === '') ? null : Number(lastReps);
+
+        let baseNoAdj, floor = 45, ceil = 210, delta = 0, reason = '';
+
         if (tpl.type === 'MAIN') {
-            if (phase === '강화 주기') return 150;
-            return 90; 
+            if (phase === '강화 주기') {
+                baseNoAdj = isLeg ? 180 : 150;
+                floor = 150; // 실패지점 복합운동: 2.5분 미만으로는 내리지 않음
+                if (reps != null) {
+                    if (reps <= 3)      { delta = +30; reason = '무거운 탑세트 +30초'; }
+                    else if (reps >= 8) { delta = -30; reason = '가벼운 탑세트 −30초'; }
+                }
+            } else { // 축적 주기 (목표 8-12회)
+                baseNoAdj = isLeg ? 120 : 90;
+                if (reps != null) {
+                    if (reps <= 8)       { delta = +30; reason = '힘든 세트 +30초'; }
+                    else if (reps >= 12) { delta = -15; reason = '여유 세트 −15초'; }
+                }
+            }
+        } else { // SUB / FINISH (단관절, 회복 빠름 → 폭 좁게)
+            baseNoAdj = isLeg ? 105 : 90;
+            const rm = (tpl.reps || '12-15').match(/(\d+)\s*-\s*(\d+)/);
+            const lo = rm ? +rm[1] : 12, hi = rm ? +rm[2] : 15;
+            if (reps != null) {
+                if (reps <= lo)      { delta = +15; reason = '힘든 세트 +15초'; }
+                else if (reps >= hi) { delta = -15; reason = '여유 세트 −15초'; }
+            }
         }
-        return 90;
+
+        const plain = Math.max(floor, Math.min(ceil, baseNoAdj));
+        const duration = Math.max(floor, Math.min(ceil, baseNoAdj + delta));
+        if (duration === plain) reason = ''; // 조정이 클램프에 먹혀 실제 변화가 없으면 이유 숨김
+        return { duration, reason };
     }
 
     function calculateAegisGoal(tplId, history, custom, unitText) {
@@ -737,7 +769,7 @@
                 let target = peak * factor;
                 target = roundMain(target);
                 const pct = Math.round(factor * 100);
-                return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트) <span class="text-slate-400 font-normal">· 강도 ${pct}%</span>`;
+                return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트)<span class="block text-xs text-slate-400 font-normal mt-0.5">강도 ${pct}%</span>`;
             }
             const lastStrength = validHistory.filter(r => r.phase === "강화 주기").sort(cwDesc)[0];
             if (!lastStrength) {
@@ -1125,6 +1157,18 @@
         }
     }
 
+    // 방금 완료한 세트(마지막으로 값이 채워진 행)의 반복수를 읽어 피로 신호로 사용
+    function getLastReps(tplId) {
+        const c = document.getElementById(`sets-${tplId}`);
+        if (!c) return null;
+        let last = null;
+        for (const row of c.children) {
+            const rv = row.querySelector('.input-r');
+            if (rv && rv.value !== '') last = Number(rv.value);
+        }
+        return last;
+    }
+
     function startTimer(tplId) {
         clearInterval(timerInt);
         clearTimeout(timerHideTimeout);
@@ -1133,7 +1177,8 @@
         const tpl = TEMPLATES[tplId];
         const custom = state.customs[tplId] || {};
         const { phase } = getPhaseInfo(state.week, state.cycle);
-        const duration = getRestTime(tplId, phase);
+        const lastReps = getLastReps(tplId);
+        const { duration, reason } = getRestTime(tplId, phase, lastReps);
         
         targetEndTime = Date.now() + duration * 1000;
         
@@ -1141,7 +1186,7 @@
         const timerEl = document.getElementById('timer-display');
         const statusEl = document.getElementById('timer-status-text');
         
-        statusEl.textContent = "Resting";
+        statusEl.textContent = reason ? `Resting · ${reason}` : "Resting";
         statusEl.className = "timer-status-label text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5";
         timerEl.classList.remove('timer-flash');
         banner.classList.remove('hide');
