@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.7</title>
+    <title>FF Growth Protocol v1.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -218,7 +218,7 @@
 
     <div id="custom-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center invisible opacity-0 transition-all duration-300">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-        <div class="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6 relative z-10 transform translate-y-full transition-transform duration-300 shadow-2xl" id="modal-panel">
+        <div class="bg-white w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-6 relative z-10 transform translate-y-full transition-transform duration-300 shadow-2xl max-h-[90vh] overflow-y-auto overscroll-contain" id="modal-panel">
             <div class="flex justify-between items-start mb-6">
                 <div><span class="text-xs font-bold text-blue-600 uppercase tracking-wide">Customize</span><h3 class="text-xl font-bold text-slate-900 mt-1">운동 설정</h3></div>
                 <button onclick="closeModal()" class="p-2 bg-slate-100 rounded-full hover:bg-slate-200 text-slate-500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -234,8 +234,12 @@
                     </div>
                 </div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">증량 단위 (비워두면 자동)</label><input type="number" step="any" id="custom-increment-input" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800" placeholder="예: 2.5, 5, 1 등"></div>
+                <div><label class="block text-sm font-bold text-slate-900 mb-2">타겟 근육 <span class="text-xs text-slate-400 font-normal">(비우면 기본값)</span></label><input type="text" id="custom-cue-primary-input" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800"></div>
+                <div><label class="block text-sm font-bold text-slate-900 mb-2">운동 큐 (설명) <span class="text-xs text-slate-400 font-normal">(비우면 기본값)</span></label><textarea id="custom-cue-tip-input" rows="3" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none resize-none text-sm"></textarea></div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">메모</label><textarea id="custom-note-input" rows="2" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none resize-none text-sm"></textarea></div>
-                <button onclick="saveCustomization()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-transform active:scale-95">저장하기</button>
+                <div class="sticky bottom-0 bg-white pt-2 -mb-2">
+                    <button onclick="saveCustomization()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-transform active:scale-95">저장하기</button>
+                </div>
             </div>
         </div>
     </div>
@@ -950,9 +954,9 @@
                 <div class="bg-slate-50 p-3 rounded-xl mb-4 text-sm border border-slate-100">
                     <div class="flex gap-2 mb-1">
                         <span class="text-xs font-bold text-slate-500 whitespace-nowrap">🎯 타겟</span>
-                        <span class="text-xs text-slate-700">${tpl.cue.primary}</span>
+                        <span class="text-xs text-slate-700">${custom.cuePrimary ? escHtml(custom.cuePrimary) : tpl.cue.primary}${(custom.cuePrimary || custom.cueTip) ? ' <span class="text-[10px] text-blue-400 font-bold">· 내 큐</span>' : ''}</span>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed mb-2">${tpl.cue.tip}</p>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-2">${custom.cueTip ? escHtml(custom.cueTip).replace(/\n/g, '<br>') : tpl.cue.tip}</p>
                     ${custom.note ? `<p class="text-xs text-amber-600 font-medium border-t border-slate-200 pt-1">📝 ${escHtml(custom.note)}</p>` : ''}
                     
                     <div class="mt-2 pt-2 border-t border-slate-200 font-bold text-blue-600 text-sm flex items-start gap-1">
@@ -1062,6 +1066,12 @@
         nameInput.placeholder = tpl.example || "예: 커스텀 운동 이름";
         document.getElementById('custom-note-input').value = custom.note || '';
         document.getElementById('custom-increment-input').value = custom.increment || '';
+        const cuePrimaryInput = document.getElementById('custom-cue-primary-input');
+        cuePrimaryInput.value = custom.cuePrimary || '';
+        cuePrimaryInput.placeholder = tpl.cue?.primary || '';
+        const cueTipInput = document.getElementById('custom-cue-tip-input');
+        cueTipInput.value = custom.cueTip || '';
+        cueTipInput.placeholder = tpl.cue?.tip || '';
         const unit = custom.unit || 'kg';
         document.querySelector(`input[name="custom-unit"][value="${unit}"]`).checked = true;
         modalEl.classList.remove('invisible', 'opacity-0');
@@ -1079,7 +1089,9 @@
         const note = document.getElementById('custom-note-input').value;
         const unit = document.querySelector('input[name="custom-unit"]:checked').value;
         const increment = document.getElementById('custom-increment-input').value;
-        if(name || note || unit !== 'kg' || increment) state.customs[editingId] = { name, note, unit, increment };
+        const cuePrimary = document.getElementById('custom-cue-primary-input').value.trim();
+        const cueTip = document.getElementById('custom-cue-tip-input').value.trim();
+        if(name || note || unit !== 'kg' || increment || cuePrimary || cueTip) state.customs[editingId] = { name, note, unit, increment, cuePrimary, cueTip };
         else delete state.customs[editingId];
         saveData();
         render(true);
