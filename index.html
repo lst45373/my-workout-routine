@@ -41,6 +41,9 @@
                         <button onclick="openGuide()" class="text-slate-400 border border-slate-200 p-1.5 rounded-full hover:bg-slate-50 hover:text-blue-500 transition">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                         </button>
+                        <button onclick="exportData()" class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 hover:text-blue-500 transition" title="기록을 JSON 파일로 저장">백업</button>
+                        <button onclick="document.getElementById('import-file').click()" class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 hover:text-green-600 transition" title="JSON 파일에서 복원">복원</button>
+                        <input type="file" id="import-file" accept="application/json,.json" class="hidden" onchange="importData(this)">
                         <button onclick="resetData()" class="text-xs text-slate-400 border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 hover:text-red-500 transition">초기화</button>
                     </div>
                 </div>
@@ -185,6 +188,13 @@
                             <li><strong>목표 횟수(8~12회)를 3~4세트</strong> 반복 수행합니다.</li>
                             <li>모든 세트에서 동일한 중량을 유지하는 것이 목표입니다.</li>
                         </ul>
+                        <p class="text-xs text-green-700 mt-3 pt-3 border-t border-green-200 leading-relaxed">
+                            <strong>🔄 강도 자동조정:</strong> 축적 목표 무게는 항상 <strong>직전 강화주기 성과(peak)</strong>를 기준으로 계산됩니다.
+                            여기에 곱해지는 <strong>강도(%)</strong>는 종목마다 자동으로 조정됩니다 —
+                            지난 축적 세션에서 한 세트라도 <strong>8회 미만</strong>이면 다음엔 한 클릭 가벼워지고,
+                            <strong>모든 세트가 12회 이상</strong>이면 한 클릭 무거워집니다.
+                            힘든 하체 종목은 알아서 낮은 강도로, 반복이 잘 붙는 종목은 높은 강도로 수렴합니다.
+                        </p>
                     </div>
                 </div>
 
@@ -280,7 +290,7 @@
         "push_c_w2": { type: "WARMUP", sets: "3세트", reps: "10-12회", defaultName: "플라이 (선피로)", example: "예: 팩덱 플라이", cue: { primary: "가슴 활성화", tip: "가슴 근육을 선피로시켜 프레스 시 자극을 극대화합니다." }, progression: { base: 0, unit: "text" } },
         "push_c_01": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "인클라인 체스트 프레스 (뉴트럴그립)", example: "예: 뉴트럴그립 인클라인 프레스", cue: { primary: "윗가슴", tip: "벤치 각도를 30도로 설정합니다. 어깨 관절의 부담을 줄이면서 윗가슴 상부(쇄골지)를 집중적으로 공략하는 것이 핵심입니다. 등을 벤치에 단단히 고정하고, 팔꿈치를 과도하게 벌리지 말고 몸통에 가까운 궤적으로 움직이세요. 덤벨을 내릴 때 윗가슴이 최대로 늘어나는 것을 느끼고, 들어 올릴 때는 윗가슴을 강하게 쥐어짠다는 느낌에 집중하세요." }, progression: { base: { BEGINNER: 12, INTERMEDIATE: 20, ADVANCED: 26 }, unit: "한쪽" } },
         "push_c_02": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "체스트 프레스 (뉴트럴그립)", example: "예: 너틸러스 체스트 (뉴트럴)", cue: { primary: "가슴 안쪽", tip: "V자 그립으로 가슴 중앙부를 강하게 수축시킵니다. 등을 패드에 기대 안정성을 확보하고, 프레스 동작 마지막에 견갑을 살짝 전인(내밀어)시켜 가슴 안쪽까지 완전히 쥐어짜주세요." }, progression: { base: { BEGINNER: 30, INTERMEDIATE: 50, ADVANCED: 70 }, unit: "총" } },
-        "push_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (뉴트럴그립립)", example: "예: 너틸러스 숄더 (뉴트럴)", cue: { primary: "전면/측면 어깨", tip: "정자세로 앉아 등받이에 등을 완전히 밀착합니다. 뉴트럴 그립을 잡고 어깨를 아래로 누른 상태를 유지하며, 머신 궤적을 따라 핸들을 위+안쪽으로 밀어 올립니다. 천천히 저항하며 시작 위치로 돌아옵니다." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 25, ADVANCED: 35 }, unit: "총" } },
+        "push_c_03": { type: "MAIN", sets: "Top/Back-off", reps: "Main", defaultName: "숄더 프레스 (뉴트럴그립)", example: "예: 너틸러스 숄더 (뉴트럴)", cue: { primary: "전면/측면 어깨", tip: "정자세로 앉아 등받이에 등을 완전히 밀착합니다. 뉴트럴 그립을 잡고 어깨를 아래로 누른 상태를 유지하며, 머신 궤적을 따라 핸들을 위+안쪽으로 밀어 올립니다. 천천히 저항하며 시작 위치로 돌아옵니다." }, progression: { base: { BEGINNER: 15, INTERMEDIATE: 25, ADVANCED: 35 }, unit: "총" } },
         "push_c_04": { type: "SUB", sets: "3-4세트", reps: "10-15회", defaultName: "사이드 레터럴 레이즈", example: "예: 사레레 머신", cue: { primary: "측면 삼각근", tip: "어깨 측면(측면 삼각근)을 완벽하게 고립하여 어깨 프레임을 넓히는 것이 목표입니다. 팔꿈치로 패드를 들어올린다는 느낌으로 수행하고, 승모근이 으쓱하지 않도록 통제하는 초점이 핵심입니다." }, progression: { base: { BEGINNER: 5, INTERMEDIATE: 10, ADVANCED: 15 }, unit: "kg", increment: 2.5 } },
         "push_c_05": { type: "FINISH", sets: "3-4세트", reps: "10-15회", defaultName: "인클라인 컬", example: "예: 인클라인 케이블 컬", cue: { primary: "이두 장두", tip: "벤치에 누워 이두근을 최대로 이완시킨 상태에서 시작하여, 이두근의 장두(긴 갈래)를 집중적으로 공략합니다. 지속적인 장력을 느끼는 것이 핵심입니다." }, progression: { base: { BEGINNER: 4, INTERMEDIATE: 6, ADVANCED: 7 }, unit: "한쪽", increment: 2.5 } },
         
@@ -460,6 +470,50 @@
         }
     }
 
+    function exportData() {
+        try {
+            const data = localStorage.getItem(STORE_KEY) || JSON.stringify(state);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const stamp = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `ffgrowth-backup-${stamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (err) {
+            alert('백업 실패: ' + err.message);
+        }
+    }
+
+    function importData(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                // 최소 형식 검증: 이 앱의 저장 구조인지 확인
+                if (typeof parsed !== 'object' || parsed === null || typeof parsed.records !== 'object') {
+                    throw new Error('이 앱의 백업 파일이 아닙니다.');
+                }
+                if (!confirm('현재 기록을 이 파일로 덮어씁니다. 계속할까요?\n(먼저 현재 데이터를 백업해두는 것을 권장합니다.)')) {
+                    input.value = '';
+                    return;
+                }
+                localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
+                location.reload();
+            } catch (err) {
+                alert('복원 실패: ' + err.message);
+                input.value = '';
+            }
+        };
+        reader.onerror = () => { alert('파일을 읽을 수 없습니다.'); input.value = ''; };
+        reader.readAsText(file);
+    }
+
     function setLevel(newLevel) {
         state.level = newLevel;
         saveData();
@@ -468,6 +522,36 @@
 
     const round2_5 = n => Math.round(n / 2.5) * 2.5;
     const e1rm = (w, r) => r > 1 ? w * (1 + r / 30) : w;
+
+    // 사용자 입력(기구 이름/메모) 이스케이프: innerHTML 삽입용 + onclick 문자열 인자용
+    const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    const escArg = s => escHtml(s).replace(/\\/g,'\\\\'); // onclick='fn("...")' 안에서 안전하게
+
+    // 시간축 정렬: date(수정 시 갱신되어 신뢰 불가) 대신 (cycle, week) 기준. date는 3차 타이브레이커.
+    const cwAsc = (a, b) => (a.cycle - b.cycle) || (a.week - b.week) || (new Date(a.date) - new Date(b.date));
+    const cwDesc = (a, b) => -cwAsc(a, b);
+
+    // 축적주기 상대강도 계수 자동조정.
+    // 컨셉: 목표무게 = 강화 peak × 계수. 계수만 직전 축적 수행결과로 ±1클릭 조정.
+    // 하한(8회) 미달 세트 발생 → 즉시 감량(-0.02). 전 세트 상한(12회↑) 달성 → 증량(+0.02, 확실할 때만). 그 외 유지.
+    const ACCUM_STEP = 0.02, ACCUM_MIN = 0.55, ACCUM_MAX = 0.75;
+    const ACCUM_REP_LOW = 8, ACCUM_REP_HIGH = 12, ACCUM_MIN_SETS = 3;
+    function getAccumFactor(tplId, validHistory) {
+        // 시드: 하체 대근육은 8주 실측상 더 힘드므로 0.65, 그 외 0.70에서 시작
+        let factor = tplId.startsWith('leg_') ? 0.65 : 0.70;
+        const pastAccum = validHistory
+            .filter(r => r.phase === '축적 주기' && Array.isArray(r.sets))
+            .sort(cwAsc);
+        pastAccum.forEach(rec => {
+            const reps = rec.sets.map(s => Number(s.r) || 0).filter(r => r > 0);
+            if (reps.length < ACCUM_MIN_SETS) return; // 세트가 부족하면 판정 보류(유지)
+            const minRep = Math.min(...reps);
+            if (minRep < ACCUM_REP_LOW) factor -= ACCUM_STEP;        // 너무 무거움 → 한 클릭 감량
+            else if (minRep >= ACCUM_REP_HIGH) factor += ACCUM_STEP; // 전 세트 상한 → 한 클릭 증량
+            factor = Math.min(ACCUM_MAX, Math.max(ACCUM_MIN, factor));
+        });
+        return Math.min(ACCUM_MAX, Math.max(ACCUM_MIN, factor));
+    }
     
     function getBaseWeight(tplId) {
         const tpl = TEMPLATES[tplId];
@@ -525,7 +609,7 @@
         const maxReps = maxRepsMatch ? parseInt(maxRepsMatch[1], 10) : minReps;
         const setMatch = targetSets.match(/(\d+)/);
         const minSets = setMatch ? parseInt(setMatch[1], 10) : 3;
-        const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const sortedHistory = [...history].sort(cwAsc);
         
         const measurementRecs = sortedHistory.filter(r => r.cycle === 1 && r.week >= 1 && r.week <= 3);
         let measurementBase = 0;
@@ -612,7 +696,7 @@
                 const inc = Number(custom.increment);
                 return Math.round(raw / inc) * inc;
             }
-            if (isLbs) return Math.round(raw / 5) * 5;
+            if (isLbs) return Math.round(raw / 10) * 10; // 양쪽 5lbs 원판 = 실질 최소 10lbs
             return isDb ? Math.round(raw) : round2_5(raw);
         };
         
@@ -627,7 +711,7 @@
 
         if (tpl.type === 'WARMUP') {
             if (validHistory.length > 0) {
-                const sortedHistory = [...validHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+                const sortedHistory = [...validHistory].sort(cwAsc);
                 const lastRec = sortedHistory[sortedHistory.length - 1];
                 if (lastRec && lastRec.sets.length > 0) {
                     const lastSet = lastRec.sets[lastRec.sets.length - 1];
@@ -649,11 +733,13 @@
                 return `🔥 초기 측정: 10회 반복 가능한 무게 찾기 (권장: ${startW}${unitText})`;
             }
             if (phase === "축적 주기") {
-                let target = peak * 0.7;
+                const factor = getAccumFactor(tplId, validHistory);
+                let target = peak * factor;
                 target = roundMain(target);
-                return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트)`;
+                const pct = Math.round(factor * 100);
+                return `🔥 축적 목표: ${target}${unitText} x 8-12회 (3-4세트) <span class="text-slate-400 font-normal">· 강도 ${pct}%</span>`;
             }
-            const lastStrength = validHistory.filter(r => r.phase === "강화 주기").sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+            const lastStrength = validHistory.filter(r => r.phase === "강화 주기").sort(cwDesc)[0];
             if (!lastStrength) {
                 let startW = peak * 0.9;
                 startW = roundMain(startW);
@@ -813,14 +899,14 @@
                 <div class="flex justify-between items-start mb-3">
                     <div class="pr-8">
                         <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase mb-1 tracking-wider ${typeBadgeClass}">${tpl.type}</span>
-                        <h3 class="text-lg font-bold text-slate-900 leading-tight">${custom.name || tpl.defaultName}</h3>
-                        ${custom.name ? `<p class="text-xs text-slate-400 mt-0.5 font-medium">Original: ${tpl.defaultName}</p>` : ''}
+                        <h3 class="text-lg font-bold text-slate-900 leading-tight">${escHtml(custom.name || tpl.defaultName)}</h3>
+                        ${custom.name ? `<p class="text-xs text-slate-400 mt-0.5 font-medium">Original: ${escHtml(tpl.defaultName)}</p>` : ''}
                     </div>
                     <div class="absolute top-4 right-4 flex gap-1">
                         <button onclick="openHistory('${tplId}')" class="text-slate-300 hover:text-blue-500 p-2" title="과거 기록">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                         </button>
-                        <button onclick="openYoutubeSearch('${custom.name || tpl.defaultName}')" class="text-red-500 hover:text-red-600 p-2" title="유튜브 검색">
+                        <button onclick="openYoutubeSearch(&quot;${escArg(custom.name || tpl.defaultName)}&quot;)" class="text-red-500 hover:text-red-600 p-2" title="유튜브 검색">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
                         </button>
                         <button onclick="openModal('${tplId}')" class="text-slate-300 hover:text-slate-500 p-2 -mr-2" title="설정">
@@ -835,7 +921,7 @@
                         <span class="text-xs text-slate-700">${tpl.cue.primary}</span>
                     </div>
                     <p class="text-xs text-slate-500 leading-relaxed mb-2">${tpl.cue.tip}</p>
-                    ${custom.note ? `<p class="text-xs text-amber-600 font-medium border-t border-slate-200 pt-1">📝 ${custom.note}</p>` : ''}
+                    ${custom.note ? `<p class="text-xs text-amber-600 font-medium border-t border-slate-200 pt-1">📝 ${escHtml(custom.note)}</p>` : ''}
                     
                     <div class="mt-2 pt-2 border-t border-slate-200 font-bold text-blue-600 text-sm flex items-start gap-1">
                         <svg class="mt-0.5 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
@@ -976,7 +1062,7 @@
         content.innerHTML = '';
         if(records.length === 0) content.innerHTML = '<p class="text-center text-slate-400 py-4">기록이 없습니다.</p>';
         else {
-            const sorted = [...records].sort((a,b) => new Date(b.date) - new Date(a.date));
+            const sorted = [...records].sort(cwDesc);
             sorted.forEach(rec => {
                 const dateStr = new Date(rec.date).toLocaleDateString();
                 const setStr = rec.sets.map(s => `${s.w}${unitLabel} x ${s.r}`).join(', ');
