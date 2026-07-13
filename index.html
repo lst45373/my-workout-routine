@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.7</title>
+    <title>FF Growth Protocol v1.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -663,8 +663,24 @@
             else return `🔥 15RM 보정 주간: 현재 기준 ${measurementBase}${unitText}에서 ${maxReps}회 달성 여부 확인`;
         }
 
-        const cycleHistory = sortedHistory.filter(r => r.cycle === currentCycle);
-        const usableHistory = cycleHistory.filter(r => r.week < currentWeek);
+        // 디로딩(13주차): 최근 사용 무게의 60%로 가볍게, 세트 축소
+        if (getPhaseInfo(currentWeek, currentCycle).phase === '디로딩') {
+            const nonDeload = sortedHistory.filter(r => r.phase !== '디로딩' && r.sets && r.sets.length > 0);
+            const lastUsed = nonDeload.length > 0 ? Number(nonDeload[nonDeload.length - 1].sets[0].w) || 0 : 0;
+            const anchor = lastUsed || measurementBase || getBaseWeight(tplId) || 0;
+            if (anchor) {
+                const grid = custom.increment ? Number(custom.increment) : (custom.unit === 'lbs' ? 5 : 2.5);
+                const t = Math.max(grid, Math.round(anchor * 0.6 / grid) * grid);
+                return `회복: ${t}${unitText} x ${targetReps} (2세트, 가볍게)`;
+            }
+            return `회복: 평소 무게의 60%로 2세트만 가볍게`;
+        }
+
+        // 진행은 사이클 경계 없이 계속 이어짐. 단 디로딩 주의 가벼운 기록은 판정에서 제외.
+        const usableHistory = sortedHistory.filter(r =>
+            (r.cycle < currentCycle || (r.cycle === currentCycle && r.week < currentWeek))
+            && r.phase !== '디로딩'
+        );
         
         const baseWeightFromTpl = getBaseWeight(tplId);
         const baseWeight = measurementBase || baseWeightFromTpl || 0;
@@ -758,7 +774,17 @@
         }
         if (tpl.progression.unit === 'text') return `${tpl.reps} (${tpl.sets})`;
         if (tpl.type === 'MAIN') {
-            if (phase === "디로딩") return "회복: 평소 워킹 중량의 50% (자세 집중)";
+            if (phase === "디로딩") {
+                // 최근 강화 세션의 탑세트(최고 중량)를 기준으로 50% 계산
+                const lastStr = validHistory.filter(r => r.phase === "강화 주기").sort(cwDesc)[0];
+                let anchor = 0;
+                if (lastStr) lastStr.sets.forEach(s => { const w = Number(s.w) || 0; if (w > anchor) anchor = w; });
+                if (!anchor) { // 강화 기록이 없으면 디로딩 제외 전체 기록 중 최고 중량
+                    validHistory.filter(r => r.phase !== '디로딩').forEach(rec => rec.sets.forEach(s => { const w = Number(s.w) || 0; if (w > anchor) anchor = w; }));
+                }
+                if (anchor) return `회복: ${roundMain(anchor * 0.5)}${unitText} x 8-10회 (1-2세트, 자세 집중)`;
+                return "회복: 평소 워킹 중량의 50% (자세 집중)";
+            }
             let peak = 0;
             validHistory.forEach(rec => rec.sets.forEach(s => {
                 const e = e1rm(Number(s.w), Number(s.r));
