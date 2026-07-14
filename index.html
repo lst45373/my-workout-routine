@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.5</title>
+    <title>FF Growth Protocol v2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -606,10 +606,9 @@
             if (phase === '강화 주기') {
                 baseNoAdj = isLeg ? 180 : 150;
                 floor = 150; // 실패지점 복합운동: 2.5분 미만으로는 내리지 않음
-                if (reps != null) {
-                    if (reps <= 3)      { delta = +30; reason = '무거운 탑세트 +30초'; }
-                    else if (reps >= 8) { delta = -30; reason = '가벼운 탑세트 −30초'; }
-                }
+                if (isLeg) ceil = 240; // 하체 실패지점 세트는 회복 여유를 더 둠
+                // 참고: 탑세트는 AMRAP(실패지점)이라 고반복 = 오히려 대사 피로 최대 → 휴식 감축 없음
+                if (reps != null && reps <= 3) { delta = +30; reason = '무거운 탑세트 +30초'; }
             } else { // 축적 주기 (목표 8-12회)
                 baseNoAdj = isLeg ? 120 : 90;
                 if (reps != null) {
