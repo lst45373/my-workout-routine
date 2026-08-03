@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v2.0</title>
+    <title>FF Growth Protocol v1.5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -592,7 +592,7 @@
 
     // 휴식시간: 타입·페이즈별 기준값에 '방금 완료한 세트의 반복수(=피로 신호)'로 ±조정.
     // 반환: { duration(초), reason(조정 이유 문구, 없으면 '') }
-    function getRestTime(tplId, phase, lastReps) {
+    function getRestTime(tplId, phase, lastReps, setIndex) {
         const tpl = TEMPLATES[tplId];
         if (!tpl) return { duration: 90, reason: '' };
         if (tpl.type === 'WARMUP') return { duration: 60, reason: '' };
@@ -604,11 +604,14 @@
 
         if (tpl.type === 'MAIN') {
             if (phase === '강화 주기') {
+                // 1세트 = 피더1(50%x5): 피로 축적이 거의 없어 짧게. 길게 쉬면 예열 효과만 식는다.
+                if (setIndex === 1) return { duration: 60, reason: '피더 세트 (짧게)' };
                 baseNoAdj = isLeg ? 180 : 150;
                 floor = 150; // 실패지점 복합운동: 2.5분 미만으로는 내리지 않음
                 if (isLeg) ceil = 240; // 하체 실패지점 세트는 회복 여유를 더 둠
                 // 참고: 탑세트는 AMRAP(실패지점)이라 고반복 = 오히려 대사 피로 최대 → 휴식 감축 없음
-                if (reps != null && reps <= 3) { delta = +30; reason = '무거운 탑세트 +30초'; }
+                // ≤3회 +30초는 탑세트(3세트 이후)에만. 피더2는 처방이 3회라 오발하지 않도록 제외.
+                if (reps != null && reps <= 3 && (setIndex == null || setIndex >= 3)) { delta = +30; reason = '무거운 탑세트 +30초'; }
             } else { // 축적 주기 (목표 8-12회)
                 baseNoAdj = isLeg ? 120 : 90;
                 if (reps != null) {
@@ -1197,13 +1200,13 @@
     // 방금 완료한 세트(마지막으로 값이 채워진 행)의 반복수를 읽어 피로 신호로 사용
     function getLastReps(tplId) {
         const c = document.getElementById(`sets-${tplId}`);
-        if (!c) return null;
-        let last = null;
+        if (!c) return { reps: null, completed: 0 };
+        let last = null, completed = 0;
         for (const row of c.children) {
             const rv = row.querySelector('.input-r');
-            if (rv && rv.value !== '') last = Number(rv.value);
+            if (rv && rv.value !== '') { last = Number(rv.value); completed++; }
         }
-        return last;
+        return { reps: last, completed };
     }
 
     function startTimer(tplId) {
@@ -1214,8 +1217,8 @@
         const tpl = TEMPLATES[tplId];
         const custom = state.customs[tplId] || {};
         const { phase } = getPhaseInfo(state.week, state.cycle);
-        const lastReps = getLastReps(tplId);
-        const { duration, reason } = getRestTime(tplId, phase, lastReps);
+        const { reps: lastReps, completed } = getLastReps(tplId);
+        const { duration, reason } = getRestTime(tplId, phase, lastReps, completed || null);
         
         targetEndTime = Date.now() + duration * 1000;
         
