@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.5.1</title>
+    <title>FF Growth Protocol v1.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -600,6 +600,9 @@
         const isLeg = tplId.startsWith('leg_'); // 하체 대근육: 심폐·전신 피로 커서 기준 휴식 자체를 길게
         const reps = (lastReps == null || isNaN(lastReps) || lastReps === '') ? null : Number(lastReps);
 
+        // 디로딩: 50~60% 가벼운 회복 세트. 목표 반복 하한을 쳐도 '힘든 세트'가 아니므로 반응형 조정 없음.
+        if (phase === '디로딩') return { duration: (isLeg && tpl.type === 'MAIN') ? 105 : 90, reason: '' };
+
         let baseNoAdj, floor = 45, ceil = 210, delta = 0, reason = '';
 
         if (tpl.type === 'MAIN') {
@@ -619,8 +622,9 @@
                     else if (reps >= 12) { delta = -15; reason = '여유 세트 −15초'; }
                 }
             }
-        } else { // SUB / FINISH (단관절, 회복 빠름 → 폭 좁게)
-            baseNoAdj = isLeg ? 105 : 90;
+        } else { // SUB / FINISH: 단관절 고립은 부위 무관하게 회복이 빠름 → 90초 통일
+            // 하체 보너스는 복합운동(MAIN)의 심폐·전신 피로에 대한 것이므로 고립엔 적용하지 않음
+            baseNoAdj = 90;
             const rm = (tpl.reps || '12-15').match(/(\d+)\s*-\s*(\d+)/);
             const lo = rm ? +rm[1] : 12, hi = rm ? +rm[2] : 15;
             if (reps != null) {
