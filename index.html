@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.5.4</title>
+    <title>FF Growth Protocol v1.5.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -191,7 +191,7 @@
                         <p class="text-xs text-green-700 mt-3 pt-3 border-t border-green-200 leading-relaxed">
                             <strong>🔄 강도 자동조정:</strong> 축적 목표 무게는 항상 <strong>직전 강화주기 성과(peak)</strong>를 기준으로 계산됩니다.
                             여기에 곱해지는 <strong>강도(%)</strong>는 종목마다 자동으로 조정됩니다 —
-                            지난 축적 세션에서 한 세트라도 <strong>8회 미만</strong>이면 다음엔 한 클릭 가벼워지고,
+                            지난 축적 세션에서 한 세트라도 <strong>10회 미만</strong>이면 다음엔 한 클릭 가벼워지고,
                             <strong>모든 세트가 12회 이상</strong>이면 한 클릭 무거워집니다.
                             힘든 하체 종목은 알아서 낮은 강도로, 반복이 잘 붙는 종목은 높은 강도로 수렴합니다.
                         </p>
@@ -548,9 +548,17 @@
 
     // 축적주기 상대강도 계수 자동조정.
     // 컨셉: 목표무게 = 강화 peak × 계수. 계수만 직전 축적 수행결과로 ±1클릭 조정.
-    // 하한(8회) 미달 세트 발생 → 즉시 감량(-0.02). 전 세트 상한(12회↑) 달성 → 증량(+0.02, 확실할 때만). 그 외 유지.
+    // 판정선(10회) 미달 세트 발생 → 즉시 감량(-0.02). 전 세트 상한(12회↑) 달성 → 증량(+0.02, 확실할 때만). 그 외 유지.
+    //
+    // [2026-09 보정] REP_LOW 8 → 10.
+    // 8회는 목표 구간(8~12회)의 하한이라 "적정"으로 판정됐지만, 실측상 1세트부터 8회로 끝나는 세션이 86%였다.
+    // 즉 8회는 여유가 아니라 한계였고, 계수가 0.707→0.674로만 내려와 목표가 계속 무겁게 출력됐다.
+    // 검증: 강화주기 백오프(탑세트 80% × 10회, 83% 달성)를 실측 기준으로 삼으면
+    //       기존 목표 = 백오프 무게 × 1.03 (한 세트 10회 나오는 무게를 3~4세트 반복시키는 셈).
+    //       REP_LOW=10으로 과거 기록 재생 시 목표가 백오프×0.95 기준선 대비 +0.3%로 수렴(기존 +7.0%).
+    // 목표 반복수 표기(8~12회)는 변경하지 않음 — 무게만 그 구간의 중앙에 맞춘다.
     const ACCUM_STEP = 0.02, ACCUM_MIN = 0.55, ACCUM_MAX = 0.75;
-    const ACCUM_REP_LOW = 8, ACCUM_REP_HIGH = 12, ACCUM_MIN_SETS = 3;
+    const ACCUM_REP_LOW = 10, ACCUM_REP_HIGH = 12, ACCUM_MIN_SETS = 3;
     function getAccumFactor(tplId, validHistory) {
         // 시드: 하체 대근육은 8주 실측상 더 힘드므로 0.65, 그 외 0.70에서 시작
         let factor = tplId.startsWith('leg_') ? 0.65 : 0.70;
@@ -561,7 +569,7 @@
             const reps = rec.sets.map(s => Number(s.r) || 0).filter(r => r > 0);
             if (reps.length < ACCUM_MIN_SETS) return; // 세트가 부족하면 판정 보류(유지)
             const minRep = Math.min(...reps);
-            if (minRep < ACCUM_REP_LOW) factor -= ACCUM_STEP;        // 너무 무거움 → 한 클릭 감량
+            if (minRep < ACCUM_REP_LOW) factor -= ACCUM_STEP;        // 10회 미만 = 무거움 → 한 클릭 감량
             else if (minRep >= ACCUM_REP_HIGH) factor += ACCUM_STEP; // 전 세트 상한 → 한 클릭 증량
             factor = Math.min(ACCUM_MAX, Math.max(ACCUM_MIN, factor));
         });
