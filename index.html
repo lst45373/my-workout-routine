@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.5.2</title>
+    <title>FF Growth Protocol v1.5.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -237,6 +237,16 @@
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">타겟 근육 <span class="text-xs text-slate-400 font-normal">(비우면 기본값)</span></label><input type="text" id="custom-cue-primary-input" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800"></div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">운동 큐 (설명) <span class="text-xs text-slate-400 font-normal">(비우면 기본값)</span></label><textarea id="custom-cue-tip-input" rows="3" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none resize-none text-sm"></textarea></div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">메모</label><textarea id="custom-note-input" rows="2" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none resize-none text-sm"></textarea></div>
+                <div class="border-t border-slate-200 pt-4">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-sm font-bold text-slate-900">기구 교체</label>
+                        <span id="variant-badge" class="text-[10px] font-bold text-slate-400"></span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed mb-2">기존 기록은 '이전 기구'로 보관되고, 목표·강도 계산은 새 기구 기준으로 처음부터 다시 시작합니다. (이름 오타 수정은 위 '기구 이름'에서 하세요)</p>
+                    <div id="variant-past-list" class="text-[11px] text-slate-500 mb-2 space-y-0.5"></div>
+                    <button type="button" onclick="swapExercise()" class="w-full py-2.5 border border-amber-300 text-amber-600 font-bold rounded-xl text-xs hover:bg-amber-50 transition active:scale-95">다른 기구로 교체</button>
+                    <button type="button" id="variant-undo-btn" onclick="undoSwap()" class="hidden w-full mt-2 py-2 text-slate-400 font-bold rounded-xl text-xs hover:bg-slate-50 transition">방금 교체 되돌리기</button>
+                </div>
                 <div class="sticky bottom-0 bg-white pt-2 -mb-2">
                     <button onclick="saveCustomization()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-transform active:scale-95">저장하기</button>
                 </div>
@@ -384,6 +394,7 @@
         level: 'ADVANCED',
         customs: {},
         records: {},
+        variants: {},
         hideGuide: false
     };
 
@@ -744,7 +755,7 @@
     function calculateGoal(tplId) {
         const tpl = TEMPLATES[tplId];
         const { phase } = getPhaseInfo(state.week, state.cycle);
-        const history = state.records[tplId] || [];
+        const history = getHistory(tplId);
         const custom = state.customs[tplId] || {};
         const isLbs = custom.unit === 'lbs';
         const isDb = isDumbbellExercise(tplId);
@@ -853,7 +864,7 @@
             for (let i = 1; i <= 13; i++) {
                 const btn = document.createElement('button');
                 btn.textContent = `${i}주`;
-                btn.onclick = () => { state.week = i; saveData(); render(); };
+                btn.onclick = () => { flushPendingInput(); state.week = i; saveData(); render(); };
                 el.appendChild(btn);
             }
         }
@@ -871,6 +882,7 @@
     }
 
     function changeCycle(delta) {
+        flushPendingInput();
         const newCycle = state.cycle + delta;
         if (newCycle < 1) return;
         state.cycle = newCycle;
@@ -879,6 +891,7 @@
     }
 
     function changeWeek(delta) {
+        flushPendingInput();
         let nextWeek = state.week + delta;
         if (nextWeek > 13) {
             state.week = 1; state.cycle++;
@@ -951,8 +964,9 @@
             const goalText = calculateGoal(tplId);
             const isLbs = custom.unit === 'lbs';
             
-            const history = state.records[tplId] || [];
+            const history = getHistory(tplId);
             const todayRec = history.find(r => r.week === state.week && r.cycle === state.cycle && r.day === state.day);
+            const variantNo = curVariant(tplId);
             const sets = todayRec ? todayRec.sets : [{w:'', r:''}];
 
             const card = document.createElement('div');
@@ -968,7 +982,7 @@
                     <div class="pr-8">
                         <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase mb-1 tracking-wider ${typeBadgeClass}">${tpl.type}</span>
                         <h3 class="text-lg font-bold text-slate-900 leading-tight">${escHtml(custom.name || tpl.defaultName)}</h3>
-                        ${custom.name ? `<p class="text-xs text-slate-400 mt-0.5 font-medium">Original: ${escHtml(tpl.defaultName)}</p>` : ''}
+                        ${(custom.name || variantNo > 1) ? `<p class="text-xs text-slate-400 mt-0.5 font-medium">Original: ${escHtml(tpl.defaultName)}${variantNo > 1 ? ` <span class="text-slate-300">· ${variantNo}번째 기구</span>` : ''}</p>` : ''}
                     </div>
                     <div class="absolute top-4 right-4 flex gap-1">
                         <button onclick="openHistory('${tplId}')" class="text-slate-300 hover:text-blue-500 p-2" title="과거 기록">
@@ -1046,7 +1060,7 @@
         container.appendChild(div);
     }
 
-    function setDay(d) { state.day = d; saveData(); render(); }
+    function setDay(d) { flushPendingInput(); state.day = d; saveData(); render(); }
     function addSet(tplId) {
         const c = document.getElementById(`sets-${tplId}`);
         const custom = state.customs[tplId] || {};
@@ -1058,6 +1072,88 @@
         saveRecord(tplId);
         render(true); // render() here is debatable but safer to keep consistency
     }
+    // ── 기구 버전(variant) ────────────────────────────────────────────────
+    // 같은 슬롯에서 기구를 바꾸면 cur를 1 올리고 이전 기구는 past에 보관한다.
+    // 기록은 지우지 않고 r.v 로 소속 기구를 표시. v 없는 예전 기록 = 1번째 기구.
+    function getVariantInfo(tplId) {
+        const info = (state.variants && state.variants[tplId]) || {};
+        return { cur: info.cur || 1, past: Array.isArray(info.past) ? info.past : [] };
+    }
+    function curVariant(tplId) { return getVariantInfo(tplId).cur; }
+    function recVariant(rec) { return rec.v || 1; }
+    // 목표/강도 계산에 쓰는 기록 = '현재 기구'의 기록만
+    function getHistory(tplId) {
+        const v = curVariant(tplId);
+        return (state.records[tplId] || []).filter(r => recVariant(r) === v);
+    }
+
+    // 입력 중이던 세트 칸의 change 이벤트를 먼저 확정시킨다.
+    // (blur 전에 주차/기구가 바뀌면 그 값이 엉뚱한 주차·기구로 저장됨)
+    function flushPendingInput() {
+        const el = document.activeElement;
+        if (el && typeof el.blur === 'function' && el.tagName === 'INPUT') el.blur();
+    }
+
+    function swapExercise() {
+        if (!editingId) return;
+        flushPendingInput();
+        const id = editingId;
+        const tpl = TEMPLATES[id];
+        const info = getVariantInfo(id);
+        const curCustom = state.customs[id] || {};
+        const curName = curCustom.name || tpl.defaultName;
+        const cnt = getHistory(id).length;
+        const msg = `'${curName}' → 다른 기구로 교체합니다.\n\n· 기존 기록 ${cnt}건은 '이전 기구'로 보관됩니다 (삭제 아님)\n· 목표·강도 계산은 새 기구 기준으로 처음부터 다시 시작합니다\n\n계속할까요?`;
+        if (!confirm(msg)) return;
+        const past = info.past.slice();
+        past.push({
+            v: info.cur,
+            name: curName,
+            custom: { ...curCustom },
+            endedAt: { cycle: state.cycle, week: state.week, date: new Date().toISOString() }
+        });
+        state.variants[id] = { cur: info.cur + 1, past };
+        // 새 기구: 이름/큐/메모/증량단위는 초기화. 단위(kg/lbs)만 유지(기구 표기 습관).
+        const keepUnit = curCustom.unit || 'kg';
+        delete state.customs[id];
+        if (keepUnit !== 'kg') state.customs[id] = { name: '', note: '', unit: keepUnit, increment: '', cuePrimary: '', cueTip: '' };
+        saveData();
+        render(true);
+        openModal(id); // 빈 입력값으로 다시 열어 새 기구 이름을 바로 입력
+    }
+
+    function undoSwap() {
+        if (!editingId) return;
+        const id = editingId;
+        const info = getVariantInfo(id);
+        if (info.past.length === 0) return;
+        if (getHistory(id).length > 0) { alert('현재 기구로 이미 기록이 있어 되돌릴 수 없습니다.'); return; }
+        const past = info.past.slice();
+        const last = past.pop();
+        state.variants[id] = { cur: last.v, past };
+        if (last.custom && Object.keys(last.custom).length > 0) state.customs[id] = { ...last.custom };
+        else delete state.customs[id];
+        if (past.length === 0 && state.variants[id].cur === 1) delete state.variants[id];
+        saveData();
+        render(true);
+        openModal(id);
+    }
+
+    function renderVariantSection(id) {
+        const info = getVariantInfo(id);
+        const all = state.records[id] || [];
+        document.getElementById('variant-badge').textContent = `현재 ${info.cur}번째 기구`;
+        const listEl = document.getElementById('variant-past-list');
+        listEl.innerHTML = info.past.map(p => {
+            const cnt = all.filter(r => recVariant(r) === p.v).length;
+            const end = p.endedAt ? `~C${p.endedAt.cycle}W${p.endedAt.week}` : '';
+            return `<div>· ${p.v}번째 <span class="font-medium text-slate-600">${escHtml(p.name)}</span> <span class="text-slate-300">(${cnt}회 ${end})</span></div>`;
+        }).join('');
+        const undoBtn = document.getElementById('variant-undo-btn');
+        const canUndo = info.past.length > 0 && getHistory(id).length === 0;
+        undoBtn.classList.toggle('hidden', !canUndo);
+    }
+
     function saveRecord(tplId) {
         const rows = document.getElementById(`sets-${tplId}`).children;
         const sets = [];
@@ -1068,8 +1164,9 @@
         }
         if (!state.records[tplId]) state.records[tplId] = [];
         const { phase } = getPhaseInfo(state.week, state.cycle);
-        const existingIdx = state.records[tplId].findIndex(r => r.week === state.week && r.cycle === state.cycle && r.day === state.day);
-        const newRecord = { date: new Date().toISOString(), week: state.week, cycle: state.cycle, day: state.day, phase, sets };
+        const v = curVariant(tplId);
+        const existingIdx = state.records[tplId].findIndex(r => r.week === state.week && r.cycle === state.cycle && r.day === state.day && recVariant(r) === v);
+        const newRecord = { date: new Date().toISOString(), week: state.week, cycle: state.cycle, day: state.day, phase, v, sets };
         if (existingIdx > -1) {
             if (sets.length === 0) state.records[tplId].splice(existingIdx, 1);
             else state.records[tplId][existingIdx] = newRecord;
@@ -1106,6 +1203,7 @@
         cueTipInput.placeholder = tpl.cue?.tip || '';
         const unit = custom.unit || 'kg';
         document.querySelector(`input[name="custom-unit"][value="${unit}"]`).checked = true;
+        renderVariantSection(id);
         modalEl.classList.remove('invisible', 'opacity-0');
         modalPanel.classList.remove('translate-y-full');
     }
@@ -1129,25 +1227,31 @@
         render(true);
         closeModal();
     }
+    function historyRowsHtml(records, unitLabel) {
+        return [...records].sort(cwDesc).map(rec => {
+            const dateStr = new Date(rec.date).toLocaleDateString();
+            const setStr = rec.sets.map(s => `${escHtml(s.w)}${unitLabel} x ${escHtml(s.r)}`).join(', ');
+            return `<div class="bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm"><div class="flex justify-between mb-1"><span class="font-bold text-slate-700">${dateStr}</span><span class="text-xs text-slate-400">C${rec.cycle}-W${rec.week} (${rec.phase})</span></div><div class="text-slate-600 font-medium">${setStr}</div></div>`;
+        }).join('');
+    }
     function openHistory(id) {
-        const records = state.records[id] || [];
+        const all = state.records[id] || [];
+        const info = getVariantInfo(id);
         const content = document.getElementById('history-content');
         const custom = state.customs[id] || {};
-        const isLbs = custom.unit === 'lbs';
-        const unitLabel = isLbs ? 'lbs' : 'kg';
-        content.innerHTML = '';
-        if(records.length === 0) content.innerHTML = '<p class="text-center text-slate-400 py-4">기록이 없습니다.</p>';
-        else {
-            const sorted = [...records].sort(cwDesc);
-            sorted.forEach(rec => {
-                const dateStr = new Date(rec.date).toLocaleDateString();
-                const setStr = rec.sets.map(s => `${s.w}${unitLabel} x ${s.r}`).join(', ');
-                const div = document.createElement('div');
-                div.className = "bg-slate-50 p-3 rounded-lg border border-slate-100 text-sm";
-                div.innerHTML = `<div class="flex justify-between mb-1"><span class="font-bold text-slate-700">${dateStr}</span><span class="text-xs text-slate-400">C${rec.cycle}-W${rec.week} (${rec.phase})</span></div><div class="text-slate-600 font-medium">${setStr}</div>`;
-                content.appendChild(div);
-            });
-        }
+        const unitLabel = custom.unit === 'lbs' ? 'lbs' : 'kg';
+        const curRecs = all.filter(r => recVariant(r) === info.cur);
+        let html = '';
+        if (curRecs.length === 0) html += '<p class="text-center text-slate-400 py-4">기록이 없습니다.</p>';
+        else html += historyRowsHtml(curRecs, unitLabel);
+        // 이전 기구 기록: 계산에는 안 쓰지만 접어서 열람 가능
+        info.past.slice().reverse().forEach(p => {
+            const recs = all.filter(r => recVariant(r) === p.v);
+            if (recs.length === 0) return;
+            const u = (p.custom && p.custom.unit === 'lbs') ? 'lbs' : 'kg';
+            html += `<details class="border-t border-slate-200 pt-2"><summary class="cursor-pointer text-xs font-bold text-slate-400 py-1">이전 기구 · ${escHtml(p.name)} (${recs.length}회) 보기</summary><div class="space-y-3 mt-2 opacity-70">${historyRowsHtml(recs, u)}</div></details>`;
+        });
+        content.innerHTML = html;
         histEl.classList.remove('invisible', 'opacity-0');
         histPanel.classList.remove('translate-y-full');
     }
