@@ -558,19 +558,25 @@
     //       REP_LOW=10으로 과거 기록 재생 시 목표가 백오프×0.95 기준선 대비 +0.3%로 수렴(기존 +7.0%).
     // 목표 반복수 표기(8~12회)는 변경하지 않음 — 무게만 그 구간의 중앙에 맞춘다.
     const ACCUM_STEP = 0.02, ACCUM_MIN = 0.55, ACCUM_MAX = 0.75;
-    const ACCUM_REP_LOW = 10, ACCUM_REP_HIGH = 12, ACCUM_MIN_SETS = 3;
+    const ACCUM_REP_LOW = 10, ACCUM_REP_HIGH = 12, ACCUM_MIN_SETS = 2;
+    const ACCUM_WINDOW = 6;   // 최근 N개 축적 세션만 재생 (과거 전체 누적 → 하한 붙박이 방지)
     function getAccumFactor(tplId, validHistory) {
         // 시드: 하체 대근육은 8주 실측상 더 힘드므로 0.65, 그 외 0.70에서 시작
         let factor = tplId.startsWith('leg_') ? 0.65 : 0.70;
         const pastAccum = validHistory
             .filter(r => r.phase === '축적 주기' && Array.isArray(r.sets))
-            .sort(cwAsc);
+            .sort(cwAsc)
+            .slice(-ACCUM_WINDOW);
         pastAccum.forEach(rec => {
             const reps = rec.sets.map(s => Number(s.r) || 0).filter(r => r > 0);
             if (reps.length < ACCUM_MIN_SETS) return; // 세트가 부족하면 판정 보류(유지)
-            const minRep = Math.min(...reps);
-            if (minRep < ACCUM_REP_LOW) factor -= ACCUM_STEP;        // 10회 미만 = 무거움 → 한 클릭 감량
-            else if (minRep >= ACCUM_REP_HIGH) factor += ACCUM_STEP; // 전 세트 상한 → 한 클릭 증량
+            // [2026-09 개편 ③] 판정 기준: 최저 세트 → 1세트.
+            // 무게가 적당한지는 피로 없는 1세트가 답한다. 뒤 세트의 반복수 하락은 무게 문제가 아니라
+            // 볼륨의 정상적 결과인데, 최저값으로 판정하면 이미 맞는 무게를 계속 깎게 된다.
+            // (실측 C2W8: 10,10,8,8 → 1세트 10회로 목표 도달했는데 최저값 8이라 감량 판정)
+            const judgeRep = reps[0];
+            if (judgeRep < ACCUM_REP_LOW) factor -= ACCUM_STEP;        // 10회 미만 = 무거움 → 한 클릭 감량
+            else if (judgeRep >= ACCUM_REP_HIGH) factor += ACCUM_STEP; // 1세트 상한 도달 → 한 클릭 증량
             factor = Math.min(ACCUM_MAX, Math.max(ACCUM_MIN, factor));
         });
         return Math.min(ACCUM_MAX, Math.max(ACCUM_MIN, factor));
@@ -832,31 +838,39 @@
                 startW = roundMain(startW);
                 return `🔥 강화 목표: 탑 세트 ${startW}${unitText} x AMRAP`;
             }
+            // [2026-09 개편 ①] 판정 대상 = 그 세션의 탑세트(가장 무거운 세트)로 한정.
+            // 기존에는 전체 세트 중 최대 e1RM을 썼기 때문에, 탑세트를 1~2회밖에 못 든 세션에서
+            // 백오프 세트(탑의 80% x 10회)가 판정을 가져가 "고반복 성공"으로 뒤집히는 경로가 있었다.
+            const topW = Math.max(...lastStrength.sets.map(s => Number(s.w) || 0));
             let best = { w: 0, r: 0, e: 0 };
             lastStrength.sets.forEach(s => {
-                const wNum = Number(s.w);
-                const rNum = Number(s.r);
+                const wNum = Number(s.w) || 0;
+                if (wNum < topW) return;                 // 탑세트 무게 미만은 제외
+                const rNum = Number(s.r) || 0;
                 const e = e1rm(wNum, rNum);
                 if (e > best.e) best = { w: wNum, r: rNum, e };
             });
-            let mult = 0.90;
+
+            // [2026-09 개편 ②] 진행 규칙 교체. 기존 mult 테이블은
+            //   · 1·2회 브랜치가 없어 기본값 0.90으로 떨어졌고 (1회 90kg > 2회 80kg < 3회 87.5kg, 비단조)
+            //   · nextW = e1RM/1.2 가 6RM 환산인데 중립점(mult 1.0)은 5회에 걸려 있어 5회가 항상 감량이었다.
+            // e1RM/1.2 자체가 이미 "6회 나올 무게"이므로 목표를 6회로 두고, 초과분만 가산한다.
+            const TARGET_REPS = 6;
             const r = best.r;
-            if (r >= 11) mult = 1.05;
-            else if (r >= 8) mult = 1.025;
-            else if (r >= 6) mult = 1.0125;
-            else if (r === 5) mult = 1.0;
-            else if (r === 4) mult = 0.975;
-            else if (r === 3) mult = 0.95;
-            if (isDb) {
-                if (mult > 1.025) mult = 1.025;
-                if (mult < 0.95) mult = 0.95;
-            }
-            const nextE1rm = best.e * mult;
-            let nextW = nextE1rm / 1.2;
-            nextW = roundMain(nextW);
-            if (mult > 1.0 && nextW <= best.w) {
-                const minStep = custom.increment ? Number(custom.increment) : (isLbs ? 5 : (isDb ? 1 : 2.5));
-                nextW = roundMain(best.w + minStep);
+            let mult = 1 + Math.max(0, Math.min(4, r - TARGET_REPS)) * 0.02;   // 초과 1회당 +2%, 상한 +8%
+            if (isDb && mult > 1.04) mult = 1.04;
+            // 최소 증량폭은 roundMain 의 반올림 단위와 반드시 같아야 한다.
+            // (기존 코드는 lbs 기본값이 5인데 반올림은 10 단위라 65lbs 같은 없는 무게가 나올 수 있었다.
+            //  기구의 실제 단위가 5나 2.5라면 설정에서 증량 단위를 지정하면 그 값이 양쪽에 함께 적용된다.)
+            const minStep = custom.increment ? Number(custom.increment) : (isLbs ? 10 : (isDb ? 1 : 2.5));
+            let nextW = roundMain(best.e * mult / 1.2);
+            if (r >= TARGET_REPS) {
+                // 목표 달성 → 증량. 반올림에 먹히면 최소 1클릭 보장 (best.w는 실측값이라 재반올림하지 않는다)
+                nextW = Math.max(nextW, best.w + minStep);
+            } else if (r === TARGET_REPS - 1) {
+                nextW = best.w;                          // 5회 → 유지. 실측 9건 중 8건이 같은 무게로 재도전
+            } else {
+                nextW = Math.min(nextW, best.w);         // 4회 이하 → 감량 (그리드가 굵으면 반올림돼 유지)
             }
             const backoff = roundMain(nextW * 0.8);
             let f1 = roundMain(nextW * 0.5);
