@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FF Growth Protocol v1.5.3</title>
+    <title>FF Growth Protocol v1.5.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
     <style>
@@ -91,7 +91,10 @@
                         </div>
                         <span id="phase-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/80 text-white backdrop-blur-sm shadow-sm">강화 주기</span>
                     </div>
-                    <h2 id="routine-title" class="text-xl font-bold mb-1">PULL A</h2>
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <h2 id="routine-title" class="text-xl font-bold">PULL A</h2>
+                        <button id="order-toggle" onclick="toggleOrderEdit()" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/10 text-white/80 hover:bg-white/20 transition" title="운동 순서 바꾸기">⇅ 순서</button>
+                    </div>
                     <p id="routine-subtitle" class="text-xs text-slate-300 font-medium">등 상부의 두께감과 분리도 타겟</p>
                 </div>
             </div>
@@ -234,6 +237,16 @@
                     </div>
                 </div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">증량 단위 (비워두면 자동)</label><input type="number" step="any" id="custom-increment-input" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800" placeholder="예: 2.5, 5, 1 등"></div>
+                <div id="custom-reps-row">
+                    <label class="block text-sm font-bold text-slate-900 mb-2">반복 대역 <span class="text-xs text-slate-400 font-normal">(보조·피니셔만, 비우면 기본값)</span></label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" inputmode="numeric" min="1" id="custom-reps-min" class="flex-1 min-w-0 p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-center" placeholder="최소">
+                        <span class="text-slate-400 font-bold">~</span>
+                        <input type="number" inputmode="numeric" min="1" id="custom-reps-max" class="flex-1 min-w-0 p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800 text-center" placeholder="최대">
+                        <span class="text-sm text-slate-500 font-bold">회</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">증량 조건: 4세트 모두 <b>최대</b> 반복 달성 · 감량 조건: <b>최소</b> 반복을 3세트 못 채움</p>
+                </div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">타겟 근육 <span class="text-xs text-slate-400 font-normal">(비우면 기본값)</span></label><input type="text" id="custom-cue-primary-input" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none font-medium text-slate-800"></div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">운동 큐 (설명) <span class="text-xs text-slate-400 font-normal">(비우면 기본값)</span></label><textarea id="custom-cue-tip-input" rows="3" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none resize-none text-sm"></textarea></div>
                 <div><label class="block text-sm font-bold text-slate-900 mb-2">메모</label><textarea id="custom-note-input" rows="2" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none resize-none text-sm"></textarea></div>
@@ -395,6 +408,7 @@
         customs: {},
         records: {},
         variants: {},
+        order: {},
         hideGuide: false
     };
 
@@ -617,6 +631,14 @@
 
     // 휴식시간: 타입·페이즈별 기준값에 '방금 완료한 세트의 반복수(=피로 신호)'로 ±조정.
     // 반환: { duration(초), reason(조정 이유 문구, 없으면 '') }
+    // 보조·피니셔는 설정 모달에서 반복 대역을 바꿀 수 있다 (MAIN·WARMUP은 템플릿 고정).
+    function isAccessory(tplId) { const t = TEMPLATES[tplId]?.type; return t === 'SUB' || t === 'FINISH'; }
+    function effReps(tplId) {
+        const tpl = TEMPLATES[tplId];
+        const c = state.customs[tplId];
+        if (c && c.reps && isAccessory(tplId)) return c.reps;
+        return tpl.reps;
+    }
     function getRestTime(tplId, phase, lastReps, setIndex) {
         const tpl = TEMPLATES[tplId];
         if (!tpl) return { duration: 90, reason: '' };
@@ -650,7 +672,7 @@
         } else { // SUB / FINISH: 단관절 고립은 부위 무관하게 회복이 빠름 → 90초 통일
             // 하체 보너스는 복합운동(MAIN)의 심폐·전신 피로에 대한 것이므로 고립엔 적용하지 않음
             baseNoAdj = 90;
-            const rm = (tpl.reps || '12-15').match(/(\d+)\s*-\s*(\d+)/);
+            const rm = (effReps(tplId) || '12-15').match(/(\d+)\s*-\s*(\d+)/);
             const lo = rm ? +rm[1] : 12, hi = rm ? +rm[2] : 15;
             if (reps != null) {
                 if (reps <= lo)      { delta = +15; reason = '힘든 세트 +15초'; }
@@ -668,7 +690,7 @@
         const tpl = TEMPLATES[tplId];
         const currentWeek = state.week;
         const currentCycle = state.cycle;
-        const targetReps = tpl.reps || "12-15회";
+        const targetReps = effReps(tplId) || "12-15회";
         const targetSets = tpl.sets || "3-4세트";
         const repMatch = targetReps.match(/(\d+)/);
         const minReps = repMatch ? parseInt(repMatch[1], 10) : 12;
@@ -789,7 +811,7 @@
             if (r.cycle === state.cycle && r.week < state.week) return true;
             return false;
         });
-        const targetReps = tpl.reps || "12-15회";
+        const targetReps = effReps(tplId) || "12-15회";
         const targetSets = tpl.sets || "3-4세트";
 
         if (tpl.type === 'WARMUP') {
@@ -927,6 +949,49 @@
         render();
     }
 
+    // ── 운동 순서 편집 ─────────────────────────────────────────────
+    // 순서는 레벨·타입(A/B/C)·요일별로 저장된다. 기록·목표 계산은 슬롯(tplId) 기준이라 순서와 무관.
+    let orderEditMode = false;
+    function orderKey(type, day) { return `${state.level}_${type}_${day}`; }
+    function getRoutineList(type, day) {
+        const base = ROUTINES_DB[state.level]?.[type]?.[day] || [];
+        const saved = state.order && state.order[orderKey(type, day)];
+        if (!Array.isArray(saved) || saved.length === 0) return base.slice();
+        const list = saved.filter(id => base.includes(id));      // 사라진 슬롯 제거
+        base.forEach(id => { if (!list.includes(id)) list.push(id); }); // 새로 생긴 슬롯은 뒤에
+        return list;
+    }
+    // SUB/FINISH는 로직이 같고 라벨만 다르다. 순서를 바꾼 루틴에서는 '마지막 보조 = FINISH'로 위치에 맞춰 표시.
+    function displayType(tplId, list, type, day) {
+        const t = TEMPLATES[tplId].type;
+        if (t !== 'SUB' && t !== 'FINISH') return t;
+        if (!(state.order && state.order[orderKey(type, day)])) return t; // 기본 순서면 원래 태그 그대로
+        const acc = list.filter(id => TEMPLATES[id] && ['SUB', 'FINISH'].includes(TEMPLATES[id].type));
+        return tplId === acc[acc.length - 1] ? 'FINISH' : 'SUB';
+    }
+    function moveCard(tplId, dir) {
+        const { type } = getPhaseInfo(state.week, state.cycle);
+        const list = getRoutineList(type, state.day);
+        const i = list.indexOf(tplId), j = i + dir;
+        if (i < 0 || j < 0 || j >= list.length) return;
+        [list[i], list[j]] = [list[j], list[i]];
+        if (!state.order) state.order = {};
+        state.order[orderKey(type, state.day)] = list;
+        saveData();
+        render(true);
+    }
+    function resetOrder() {
+        const { type } = getPhaseInfo(state.week, state.cycle);
+        if (state.order) delete state.order[orderKey(type, state.day)];
+        saveData();
+        render(true);
+    }
+    function toggleOrderEdit() {
+        flushPendingInput();
+        orderEditMode = !orderEditMode;
+        render(true);
+    }
+
     function render(preserveScroll = false) {
         const mainContent = document.getElementById('main-content');
         const mainScroll = mainContent ? mainContent.scrollTop : 0;
@@ -977,8 +1042,51 @@
         const listEl = document.getElementById('exercise-list');
         listEl.innerHTML = '';
         
-        const routineList = ROUTINES_DB[state.level]?.[type]?.[state.day] || [];
-        
+        const routineList = getRoutineList(type, state.day);
+
+        const toggleBtn = document.getElementById('order-toggle');
+        if (toggleBtn) {
+            toggleBtn.textContent = orderEditMode ? '✓ 완료' : '⇅ 순서';
+            toggleBtn.className = 'text-[11px] font-bold px-2.5 py-1 rounded-lg transition ' +
+                (orderEditMode ? 'bg-white text-blue-600' : 'bg-white/10 text-white/80 hover:bg-white/20');
+        }
+
+        if (orderEditMode) {
+            const isCustom = !!(state.order && state.order[orderKey(type, state.day)]);
+            const wrap = document.createElement('div');
+            wrap.className = 'bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden';
+            let rows = `<div class="px-4 py-3 bg-blue-50 text-xs text-blue-700 font-medium">
+                ▲▼로 순서를 바꾸세요. <b>${state.day.toUpperCase()} ${type}</b>에만 적용되고, 기록·목표 계산에는 영향이 없습니다.</div>`;
+            routineList.forEach((tplId, i) => {
+                const tpl = TEMPLATES[tplId];
+                if (!tpl) return;
+                const custom = state.customs[tplId] || {};
+                let badge = 'bg-slate-100 text-slate-500';
+                const dType = displayType(tplId, routineList, type, state.day);
+                if (tpl.type === 'MAIN') badge = 'bg-blue-50 text-blue-600';
+                else if (tpl.type === 'WARMUP') badge = 'bg-amber-50 text-amber-600';
+                const upDis = i === 0, dnDis = i === routineList.length - 1;
+                const btn = (dis, dir, label) => `<button ${dis ? 'disabled' : ''} onclick="moveCard('${tplId}', ${dir})"
+                    class="w-10 h-10 flex items-center justify-center rounded-lg border text-base font-bold ${dis ? 'border-slate-100 text-slate-200' : 'border-slate-200 text-slate-600 active:bg-blue-50 hover:bg-slate-50'}">${label}</button>`;
+                rows += `<div class="flex items-center gap-3 px-4 py-2.5 border-t border-slate-100">
+                    <span class="text-xs font-bold text-slate-300 w-4 text-right">${i + 1}</span>
+                    <div class="flex-1 min-w-0">
+                        <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider ${badge}">${dType}</span>
+                        <p class="text-sm font-bold text-slate-800 truncate">${escHtml(custom.name || tpl.defaultName)}</p>
+                    </div>
+                    ${btn(upDis, -1, '▲')}${btn(dnDis, 1, '▼')}
+                </div>`;
+            });
+            rows += `<div class="flex gap-2 p-3 border-t border-slate-100 bg-slate-50">
+                ${isCustom ? `<button onclick="resetOrder()" class="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-500 bg-white border border-slate-200">기본 순서로</button>` : ''}
+                <button onclick="toggleOrderEdit()" class="flex-1 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600">완료</button>
+            </div>`;
+            wrap.innerHTML = rows;
+            listEl.appendChild(wrap);
+            if (preserveScroll) setTimeout(() => { if (mainContent) mainContent.scrollTop = mainScroll; window.scrollTo(0, winScroll); }, 0);
+            return;
+        }
+
         routineList.forEach((tplId, index) => {
             if (!TEMPLATES[tplId]) return;
             const tpl = TEMPLATES[tplId];
@@ -996,13 +1104,14 @@
             if (!preserveScroll) card.style.animationDelay = `${index * 0.05}s`;
             
             let typeBadgeClass = 'bg-slate-100 text-slate-500';
+            const dType = displayType(tplId, routineList, type, state.day);
             if (tpl.type === 'MAIN') typeBadgeClass = 'bg-blue-50 text-blue-600';
             else if (tpl.type === 'WARMUP') typeBadgeClass = 'bg-amber-50 text-amber-600';
             
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-3">
                     <div class="pr-8">
-                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase mb-1 tracking-wider ${typeBadgeClass}">${tpl.type}</span>
+                        <span class="inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase mb-1 tracking-wider ${typeBadgeClass}">${dType}</span>
                         <h3 class="text-lg font-bold text-slate-900 leading-tight">${escHtml(custom.name || tpl.defaultName)}</h3>
                         ${(custom.name || variantNo > 1) ? `<p class="text-xs text-slate-400 mt-0.5 font-medium">Original: ${escHtml(tpl.defaultName)}${variantNo > 1 ? ` <span class="text-slate-300">· ${variantNo}번째 기구</span>` : ''}</p>` : ''}
                     </div>
@@ -1225,6 +1334,13 @@
         cueTipInput.placeholder = tpl.cue?.tip || '';
         const unit = custom.unit || 'kg';
         document.querySelector(`input[name="custom-unit"][value="${unit}"]`).checked = true;
+        const repsRow = document.getElementById('custom-reps-row');
+        repsRow.hidden = !isAccessory(id);
+        const baseM = (tpl.reps || '').match(/(\d+)\s*-\s*(\d+)/);
+        const curM = (custom.reps || '').match(/(\d+)\s*-\s*(\d+)/);
+        const rMin = document.getElementById('custom-reps-min'), rMax = document.getElementById('custom-reps-max');
+        rMin.value = curM ? curM[1] : ''; rMax.value = curM ? curM[2] : '';
+        rMin.placeholder = baseM ? baseM[1] : '최소'; rMax.placeholder = baseM ? baseM[2] : '최대';
         renderVariantSection(id);
         modalEl.classList.remove('invisible', 'opacity-0');
         modalPanel.classList.remove('translate-y-full');
@@ -1243,7 +1359,18 @@
         const increment = document.getElementById('custom-increment-input').value;
         const cuePrimary = document.getElementById('custom-cue-primary-input').value.trim();
         const cueTip = document.getElementById('custom-cue-tip-input').value.trim();
-        if(name || note || unit !== 'kg' || increment || cuePrimary || cueTip) state.customs[editingId] = { name, note, unit, increment, cuePrimary, cueTip };
+        let reps = '';
+        if (isAccessory(editingId)) {
+            const a = document.getElementById('custom-reps-min').value.trim();
+            const b = document.getElementById('custom-reps-max').value.trim();
+            if (a || b) {
+                const lo = parseInt(a, 10), hi = parseInt(b, 10);
+                if (!(lo >= 1 && hi >= lo && hi <= 50)) { alert('반복 대역을 확인하세요.\n최소·최대를 둘 다 입력하고, 최대가 최소 이상이어야 합니다 (1~50회).'); return; }
+                reps = `${lo}-${hi}회`;
+                if (reps === TEMPLATES[editingId].reps) reps = ''; // 기본값과 같으면 저장하지 않음
+            }
+        }
+        if(name || note || unit !== 'kg' || increment || cuePrimary || cueTip || reps) state.customs[editingId] = { name, note, unit, increment, cuePrimary, cueTip, ...(reps ? { reps } : {}) };
         else delete state.customs[editingId];
         saveData();
         render(true);
